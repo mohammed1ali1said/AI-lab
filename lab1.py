@@ -45,9 +45,108 @@ class statistics_manager:
         plt.show()
         return normalized_fitnesses
 
-
 def close_event():
     plt.close()
+
+
+#parents selection
+def roulette_wheel_selection(fitnesses,num_parents=2):
+    total = sum(fitnesses)
+    probs = []
+    local_sum = 0
+    for fit in fitnesses:
+        probs.append((fit / total) + local_sum)
+        local_sum += fit / total
+
+    parents = []
+    for _ in range(num_parents):
+        #generate two random numbers
+        rand_num = random.random()
+        # use binary to find index
+        index = np.searchsorted(probs, rand_num)
+        parents.append(index)
+    return parents
+
+def stochastic_universal_sampling(fitnesses, num_parents=2):
+    total_fitness = sum(fitnesses)
+    num_individuals = len(fitnesses)
+    spacing = total_fitness / num_parents
+
+    # Choose a random starting point between 0 and spacing
+    start = np.random.uniform(0, spacing)
+    points = [start + i * spacing for i in range(num_parents)]
+
+    # Compute cumulative fitness array
+    cumulative_fitness = np.cumsum(fitnesses)
+
+    selected_parents = []
+    for point in points:
+        # Use nps binary search to find the index
+        index = np.searchsorted(cumulative_fitness, point, side='right')
+        selected_parents.append(index % num_individuals)
+
+    return selected_parents
+
+def undeterministic_tournament_selection(fitnesses, num_parents=2, k=2, p=0.75):
+    num_individuals = len(fitnesses)
+    selected_parents = []
+
+    for _ in range(num_parents):
+        # Select k individuals from the population
+        tournament_indices = np.random.choice(range(num_individuals), size=k, replace=False)
+        tournament_fitnesses = [fitnesses[i] for i in tournament_indices]
+
+        # Sort the selected individuals based on their fitness values
+        sorted_indices = np.argsort(tournament_fitnesses)[::-1]
+
+        # Determine the probability of selection for each individual based on their rank
+        selection_probs = [p * (1 - p) ** i for i in range(k)]
+
+        # Normalize the selection probabilities
+        selection_probs /= np.sum(selection_probs)
+
+        # Select an individual based on the calculated probabilities
+        selected_index = np.random.choice(sorted_indices, p=selection_probs)
+        selected_parents.append(tournament_indices[selected_index])
+
+    return selected_parents
+
+
+
+
+def linear_scaling(scaling_factor,constant):
+    scaled = []
+    for fit in fitness:
+        scaled.append((fit*scaling_factor+constant))
+    return scaled
+
+def Uniform(elites,num_genes):
+    parent1 = random.choice(elites)
+    parent2 = random.choice(elites)
+    child = [parent1[i] if random.random() < 0.5 else parent2[i] for i in range(num_genes)]
+    return child
+
+def Single(elites,num_genes):
+    parent1 = random.choice(elites)
+    parent2 = random.choice(elites)
+    random_index = random.randint(0, num_genes - 1)
+    child = parent1[:random_index] + parent2[random_index:]
+    return child
+
+def Two(elites,num_genes):
+    parent1 = random.choice(elites)
+    parent2 = random.choice(elites)
+    random_index1 = 0
+    random_index2 = 0
+    while random_index1 >= random_index2:
+          random_index1 = random.randint(0, num_genes - 1)
+          random_index2 = random.randint(0, num_genes - 1)
+
+    child = parent1[:random_index1] + parent2[random_index1:random_index2] + parent1[random_index2:]
+    return child
+
+
+
 
 
 def fitness(individual):
@@ -97,6 +196,8 @@ def evaluation(genes):
     cow_weight = 0.2
     score = bull_weight * bulls + cow_weight * cows
     return score
+
+
 def plot_distribution(data, xlabel, ylabel, title):
     # Create a histogram
         plt.figure(figsize=(10, 6))
@@ -107,6 +208,8 @@ def plot_distribution(data, xlabel, ylabel, title):
         plt.ylabel(ylabel)
         plt.title(title)
         plt.show()
+
+
 
 def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method):
     population = []
@@ -139,24 +242,14 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         offspring = []
         while len(offspring) < pop_size - elite_size:
             if crossover_method == "uniform":
-                parent1 = random.choice(elites)
-                parent2 = random.choice(elites)
-                child = [parent1[i] if random.random() < 0.5 else parent2[i] for i in range(num_genes)]
-            elif crossover_method == "single":
-                parent1 = random.choice(elites)
-                parent2 = random.choice(elites)
-                random_index = random.randint(0, num_genes - 1)
-                child = parent1[:random_index] + parent2[random_index:]
-            elif crossover_method == "two":
-                parent1 = random.choice(elites)
-                parent2 = random.choice(elites)
-                random_index1 = 0
-                random_index2 = 0
-                while random_index1 >= random_index2:
-                    random_index1 = random.randint(0, num_genes - 1)
-                    random_index2 = random.randint(0, num_genes - 1)
+               child = Uniform(elites,num_genes)
 
-                child = parent1[:random_index1] + parent2[random_index1:random_index2] + parent1[random_index2:]
+            elif crossover_method == "single":
+                child = Single(elites,num_genes)
+
+            elif crossover_method == "two":
+                child = Two(elites,num_genes)
+
 
             ga_mutation = mutation_rate * sys.maxsize
             if random.random() < ga_mutation:
@@ -171,8 +264,6 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         cpu_times.append(end_cpu - start_cpu)
         elapsed_times.append(end_elapsed - start_elapsed)
 
-        end_cpu = 0
-        end_elapsed = 0
 
     plot_distribution(generation_avg_fitnesses, 'Generation', 'AVG', 'Fittness AVG distribution')
     plot_distribution(generation_avg_SD, 'Generation', 'AVG', 'Standart Deviation')
