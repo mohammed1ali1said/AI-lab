@@ -3,6 +3,7 @@ import argparse
 import random
 import sys
 import time
+import math
 import matplotlib.pyplot as plt
 import crossOverMethods as com
 import Mutations as mut
@@ -11,6 +12,7 @@ import parentSelection as ps
 import  Objects as objects
 
 
+# STRINGS ORIGINAL FITNESS
 
 def fitness(individual):
     target = list("Hello, world!")
@@ -20,6 +22,7 @@ def fitness(individual):
             score += 1
     return score
 
+# STRINGS BULLS COWS FITNESS
 
 def evaluation(genes):
     word = "Hello, world!"
@@ -54,22 +57,77 @@ def evaluation(genes):
 
 
 
+# SUDOKU FITNESS
+def calc_fitness_sudoku(sudoku_individual: objects.SudokuIndividual):
+    sudoku_grid = sudoku_individual.grid
+    size = len(sudoku_grid)
+    grid_len = len(sudoku_grid)
+    # for row in sudoku_grid:
+    #     print(row)
+    row_score_sum = 0
+    col_score_sum = 0
+    box_score_sum = 0
+
+    for i in range(0,len(sudoku_grid)):
+        row_score_sum += calc_row_fitness(sudoku_grid,i)
+
+    for i in range(0,len(sudoku_grid)):
+        col_score_sum += calc_col_fitness(sudoku_grid,i)
+
+    N = len(sudoku_grid)
+    step_size = int(math.sqrt(size))
+
+    for i in range(0, N, step_size):
+        for j in range(0, N, step_size):
+            box_score_sum += calc_box_fitness(sudoku_grid,i,j,int(math.sqrt(size)))
+
+    # print("row sum: ",row_score_sum)
+    # print("column sum: ",col_score_sum)
+    # print("boxes sum: ", box_score_sum)
+    return row_score_sum+col_score_sum+box_score_sum
+def calc_row_fitness(grid,index): # calculates the fitness of a rowat a certain index in the grid
+    row_set = set(grid[index])
+    return len(row_set)
 
 
+def calc_col_fitness(grid,index): # calculates the fitness of a column at a certain index in the grid
+    # Extract the specified column
+    column = [row[index] for row in grid if len(row) > index]
+    # Convert the column to a set to find unique elements
+    unique_elements = set(column)
+
+    # Return the number of unique elements
+    return len(unique_elements)
+
+
+def calc_box_fitness(matrix, starting_row_index, starting_column_index, box_row_size): # calculates the fitness of each box of size sqrt(n)Xsqrt(n)
+
+    sub_matrix_elements = []
+    # Extract the elements of the sub-matrix
+    for i in range(starting_row_index, starting_row_index + box_row_size):
+        for j in range(starting_column_index, starting_column_index + box_row_size):
+            if i < len(matrix) and j < len(matrix[i]):
+                sub_matrix_elements.append(matrix[i][j])
+
+    # Convert the list to a set to find unique elements
+    unique_elements = set(sub_matrix_elements)
+
+    # Return the number of unique elements
+    return len(unique_elements)
 
 
 
 # Example Sudoku grid (0 represents empty cells)
 input_sudoku_grid = [
-    [5, 3, 0, 0, 7, 0, 0, 0, 0],
-    [6, 0, 0, 1, 9, 5, 0, 0, 0],
-    [0, 9, 8, 0, 0, 0, 0, 6, 0],
-    [8, 0, 0, 0, 6, 0, 0, 0, 3],
-    [4, 0, 0, 8, 0, 3, 0, 0, 1],
-    [7, 0, 0, 0, 2, 0, 0, 0, 6],
-    [0, 6, 0, 0, 0, 0, 2, 8, 0],
-    [0, 0, 0, 4, 1, 9, 0, 0, 5],
-    [0, 0, 0, 0, 8, 0, 0, 7, 9]
+    [0, 0, 0, 2, 6, 0, 7, 0, 1],
+    [6, 8, 0, 0, 7, 0, 0, 9, 0],
+    [1, 9, 0, 0, 0, 4, 5, 0, 0],
+    [8, 2, 0, 1, 0, 0, 0, 4, 0],
+    [0, 0, 4, 6, 0, 2, 9, 0, 0],
+    [0, 5, 0, 0, 0, 3, 0, 2, 8],
+    [0, 0, 9, 3, 0, 0, 0, 7, 4],
+    [0, 4, 0, 0, 5, 0, 0, 3, 6],
+    [7, 0, 3, 0, 1, 8, 0, 0, 0]
 ]
 
 
@@ -95,7 +153,9 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     elapsed_times = []
     elite_size = int(pop_size * 0.1)
 
+    generation_counter = -1
     for generation in range(max_generations):
+        generation_counter += 1
         start_cpu = time.process_time()
         start_elapsed = time.time()
 
@@ -105,8 +165,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         generation_avg_fitnesses.append(Statistics_Manager.avg_fittness_generation())
         generation_avg_SD.append(Statistics_Manager.Standard_deviation())
 
-        if  generation%20==0:
-            Statistics_Manager.norm_and_plot()
+        # if  generation%20==0:
+        #     Statistics_Manager.norm_and_plot()
 
 
         # PARENT SELECTION METHODS
@@ -198,6 +258,9 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
             # MUTATION
             ga_mutation = mutation_rate * sys.maxsize
+            if generation_counter > 0:
+                ga_mutation / 2*generation_counter
+
             if random.random() < ga_mutation:
                 if problem == "strings":
                     mut.mutate(child)
@@ -212,6 +275,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 if problem == "binpack" and mutation_method == "scramble":
                     pass
 
+            #print("current child fitness:", fitness_func(child))
             offspring.append(child)
         population = elites + offspring
 
@@ -223,12 +287,53 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
 
 
-    object.plot_distribution(generation_avg_fitnesses, 'Generation', 'AVG', 'Fittness AVG distribution')
-    object.plot_distribution(generation_avg_SD, 'Generation', 'AVG', 'Standart Deviation')
-    object.plot_distribution(cpu_times,"Generation","Cpu-time","Ticks")
-    object.plot_distribution(elapsed_times, "Generation", "Elapsead-time", "Elapsed")
+    objects.plot_distribution(generation_avg_fitnesses, 'Generation', 'AVG', 'Fittness AVG distribution')
+    objects.plot_distribution(generation_avg_SD, 'Generation', 'AVG', 'Standart Deviation')
+    objects.plot_distribution(cpu_times,"Generation","Cpu-time","Ticks")
+    objects.plot_distribution(elapsed_times, "Generation", "Elapsead-time", "Elapsed")
 
     best_individual = max(population, key=lambda individual: fitness_func(individual))
     best_fitness = fitness_func(best_individual)
 
+
     return best_individual, best_fitness
+
+
+bestIndividual,bestFitness = genetic_algorithm(300, 9, calc_fitness_sudoku, 90, 0.7, "pmx","scramble","tournament","sudoku")
+
+def is_valid_sudoku(grid):
+    def is_valid_block(block):
+        block = [num for num in block if num != 0]
+        return len(block) == len(set(block))
+
+    # Check rows
+    for row in grid:
+        if not is_valid_block(row):
+            return False
+
+    # Check columns
+    for col in zip(*grid):
+        if not is_valid_block(col):
+            return False
+
+    # Check 3x3 subgrids
+    for i in range(0, 9, 3):
+        for j in range(0, 9, 3):
+            block = [grid[x][y] for x in range(i, i + 3) for y in range(j, j + 3)]
+            if not is_valid_block(block):
+                return False
+
+    return True
+
+
+if isinstance(bestIndividual,objects.SudokuIndividual):
+    print("Best individual: ")
+    for row in bestIndividual.grid:
+        print(row)
+
+print("Best fitness: ",bestFitness)
+
+#print("solution is valid? :",is_valid_sudoku(bestIndividual.grid))
+
+# individual = objects.SudokuIndividual(input_sudoku_grid)
+# individual.init_random_sudoku_individual(input_sudoku_grid)

@@ -1,5 +1,5 @@
-from random import random
-
+import random
+import  Objects as objects
 
 def Uniform(elites,num_genes):
     parent1 = random.choice(elites)
@@ -51,18 +51,20 @@ def pmx_crossover_sudoku(parent1, parent2,original_row): # applies pmx crossover
 
         return parent1_copy,parent2_copy
 
-def pmx_crossover_sudoku_grid(parent1,parent2,original_grid): # this function applies the pmx crossover on 2 parent grids and returns 1 child grid
+def pmx_crossover_sudoku_grid(parent1:objects.SudokuIndividual,parent2:objects.SudokuIndividual,original_grid): # this function applies the pmx crossover on 2 parent grids and returns 1 child grid
         # Note : this function return 1 child grid, but its implementation supports returning 2 childs in case we needed this later
+        firstParent = parent1.grid
+        secondParent = parent2.grid
         offspring1 = []
         offspring2 = []
-        for i in range(0, len(parent1)):
-            res1, res2 = pmx_crossover_sudoku(parent1[i], parent2[i], original_grid[i])
+        for i in range(0, len(firstParent)):
+            res1, res2 = pmx_crossover_sudoku(firstParent[i], secondParent[i], original_grid[i])
             offspring1.append(res1)
             offspring2.append(res2)
         return offspring1
 
 
-def cx_crossover_sudoku(parent1, parent2,original_row): # applies pmx crossover on 2 given permutations (2 rows in the gird in our case)
+def cx_crossover_sudoku(parent1, parent2,original_row): # applies cx crossover on 2 given permutations (2 rows in the gird in our case)
 
     pass
 
