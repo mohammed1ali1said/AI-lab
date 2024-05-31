@@ -220,15 +220,15 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 fitnesses = parentSelection.linear_scaling(5,1,fitnesses)
                 elite_indices = ps.roulette_wheel_selection(fitnesses,elite_size)
                 elites = [population[i] for i in elite_indices]
-                pass
+
             if parent_selection_method == "sus":
                 fitnesses = parentSelection.linear_scaling(5,1,fitnesses)
                 elite_indices = ps.stochastic_universal_sampling(fitnesses,elite_size)
                 elites = [population[i] for i in elite_indices]
-                pass
+
             if parent_selection_method == "tournament":
                 pass
-            pass
+
 
         #CROSSOVER
         offspring = []
@@ -245,7 +245,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             elif problem == "sudoku" and crossover_method == "pmx":
                 parent1 = random.choice(elites)
                 parent2 = random.choice(elites)
-                child_grid =com.pmx_crossover_sudoku_grid(parent1,parent2,input_sudoku_grid) # returns 1 child grid
+                child_grid =com.pmx_crossover_sudoku_grid_block(parent1,parent2,input_sudoku_grid) # returns 1 child grid
                 child = objects.SudokuIndividual(child_grid) # create a new born sudoku individual
 
             elif problem == "sudoku" and crossover_method == "cx":
@@ -259,7 +259,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             # MUTATION
             ga_mutation = mutation_rate * sys.maxsize
             if generation_counter > 0:
-                ga_mutation / 2*generation_counter
+               ga_mutation =  ga_mutation / (4*generation_counter)
 
             if random.random() < ga_mutation:
                 if problem == "strings":
@@ -299,7 +299,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     return best_individual, best_fitness
 
 
-bestIndividual,bestFitness = genetic_algorithm(300, 9, calc_fitness_sudoku, 90, 0.7, "pmx","scramble","tournament","sudoku")
+bestIndividual,bestFitness = genetic_algorithm(1000, 9, calc_fitness_sudoku, 80, 0.25, "pmx","scramble","tournament","sudoku")
 
 def is_valid_sudoku(grid):
     def is_valid_block(block):
