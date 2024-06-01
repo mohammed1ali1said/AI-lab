@@ -27,6 +27,11 @@ def Two(elites,num_genes):
     child = parent1[:random_index1] + parent2[random_index1:random_index2] + parent1[random_index2:]
     return child
 
+
+def transpose_matrix(matrix):
+    return [list(row) for row in zip(*matrix)]
+
+
 def block_to_row(block):
     return [num for row in block for num in row]
 
@@ -39,6 +44,7 @@ def row_to_block(lst):
     # Convert the list to a list of lists (block)
     return [lst[i * size:(i + 1) * size] for i in range(size)]
 def pmx_crossover_sudoku_block(parent1,parent2,original_block):
+
     parent1_as_row = block_to_row(parent1)
     parent2_as_row = block_to_row(parent2)
     original_block_as_row = block_to_row(original_block)
@@ -46,17 +52,26 @@ def pmx_crossover_sudoku_block(parent1,parent2,original_block):
     res1,res2 = pmx_crossover_sudoku(parent1_as_row,parent2_as_row,original_block_as_row)
     res1_block = row_to_block(res1)
     res2_block = row_to_block(res2)
+
     return res1_block
 
+
+def row_contains_zeros(row):
+    for num in row:
+        if num == 0:
+            return True
+    return False
 
 def pmx_crossover_sudoku(parent1, parent2,
                          original_row):  # applies pmx crossover on 2 given permutations (2 rows in the gird in our case)
     # Get a random position
 
     random_index = random.randint(0, len(parent1) - 1)
-    while original_row[
-        random_index] != 0:  # make sure that the index we are swapping was not in the original input matrix, (because otherwsie we are not solving the given problem)
-        random_index = random.randint(0, len(parent1) - 1)
+
+
+    if(row_contains_zeros(original_row)):
+        while original_row[random_index] != 0:  # make sure that the index we are swapping was not in the original input matrix, (because otherwsie we are not solving the given problem)
+            random_index = random.randint(0, len(parent1) - 1)
 
 
     temp = parent1[random_index]
@@ -91,43 +106,49 @@ def pmx_crossover_sudoku_grid(parent1:objects.SudokuIndividual,parent2:objects.S
         return offspring1
 
 
-def extract_blocks(grid):
+def extract_blocks(grid,size):
     blocks = []
-    for i in range(0, 9, 3):
-        for j in range(0, 9, 3):
-            block = [grid[x][j:j+3] for x in range(i, i+3)]
+    block_size = math.sqrt(size)
+    for i in range(0, size, int(block_size)):
+        for j in range(0, size, int(block_size)):
+            block = [grid[x][j:j+int(block_size)] for x in range(i, i+int(block_size))]
             blocks.append(block)
     return blocks
 
 
-def reconstruct_grid(blocks):
-    grid = [[0]*9 for _ in range(9)]
+def reconstruct_grid(blocks,size):
+    block_size = int(math.sqrt(size))
+    grid = [[0]*size for _ in range(size)]
     block_index = 0
-    for i in range(0, 9, 3):
-        for j in range(0, 9, 3):
+    for i in range(0, size, int(block_size)):
+        for j in range(0, size, int(block_size)):
             block = blocks[block_index]
             block_index += 1
-            for x in range(3):
-                grid[i+x][j:j+3] = block[x]
+            for x in range(int(block_size)):
+                grid[i+x][j:j+int(block_size)] = block[x]
     return grid
-
 
 
 def pmx_crossover_sudoku_grid_block(parent1:objects.SudokuIndividual,parent2:objects.SudokuIndividual,original_grid):
     # Note : this function return 1 child grid, but its implementation supports returning 2 childs in case we needed this later
     firstParent = parent1.grid
     secondParent = parent2.grid
+
+
     offspring1 = []
     offspring2 = []
 
-    firstParentBlocks = extract_blocks(firstParent)
-    secondParentBlocks = extract_blocks(secondParent)
-    originalGridBlocks = extract_blocks(original_grid)
+
+    firstParentBlocks = extract_blocks(firstParent,len(firstParent))
+    secondParentBlocks = extract_blocks(secondParent,len(firstParent))
+    originalGridBlocks = extract_blocks(original_grid,len(firstParent))
+
     crossed_blocks = []
+
     for block1, block2,orig_block in zip(firstParentBlocks, secondParentBlocks,originalGridBlocks):
         crossed_blocks.append(pmx_crossover_sudoku_block(block1,block2,orig_block))
 
-    crossed_grid = reconstruct_grid(crossed_blocks)
+    crossed_grid = reconstruct_grid(crossed_blocks,len(firstParent))
     return crossed_grid
 def cx_crossover_sudoku(parent1, parent2,original_row): # applies cx crossover on 2 given permutations (2 rows in the gird in our case)
 

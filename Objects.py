@@ -52,12 +52,13 @@ class StringIndividual:
 
 class SudokuIndividual:
 
-    def __init__(self,grid):
+    def __init__(self,grid,size):
+        self.size = size
         self.grid = grid
         self.age = 0
         pass
 
-    def init_random_sudoku_individual(self, input_grid):
+    def init_random_sudoku_individual_byRows(self, input_grid):
 
         # Create a deep copy of the input grid to modify
         new_grid = [row[:] for row in input_grid]
@@ -66,7 +67,7 @@ class SudokuIndividual:
             # Determine which numbers are already in the row
             existing_numbers = set(row) - {0}
             # Create a list of possible numbers for the row
-            possible_numbers = [num for num in range(1, 10) if num not in existing_numbers]
+            possible_numbers = [num for num in range(1, self.size+1) if num not in existing_numbers]
 
             for i in range(len(row)):
                 if row[i] == 0:
@@ -75,6 +76,60 @@ class SudokuIndividual:
                     row[i] = number
                     # Remove the chosen number from the possible numbers
                     possible_numbers.remove(number)
+
+        self.grid = new_grid
+
+    def init_random_sudoku_individual_byColumns(self, input_grid):
+        # Create a deep copy of the input grid to modify
+        new_grid = [row[:] for row in input_grid]
+
+        # Transpose the grid to make columns accessible as rows
+        transposed_grid = list(map(list, zip(*new_grid)))
+
+        for col in transposed_grid:
+            # Determine which numbers are already in the column
+            existing_numbers = set(col) - {0}
+            # Create a list of possible numbers for the column
+            possible_numbers = [num for num in range(1, self.size+1) if num not in existing_numbers]
+
+            for i in range(len(col)):
+                if col[i] == 0:
+                    # Choose a random number from the possible numbers
+                    number = random.choice(possible_numbers)
+                    col[i] = number
+                    # Remove the chosen number from the possible numbers
+                    possible_numbers.remove(number)
+
+        # Transpose the grid back to its original form
+        new_grid = list(map(list, zip(*transposed_grid)))
+
+        self.grid = new_grid
+
+    def init_random_sudoku_individual_byBlocks(self, input_grid):
+        # Create a deep copy of the input grid to modify
+        new_grid = [row[:] for row in input_grid]
+        block_size = int(self.size ** 0.5)
+
+        for block_row in range(0, self.size, block_size):
+            for block_col in range(0, self.size, block_size):
+                # Determine which numbers are already in the block
+                existing_numbers = set()
+                for i in range(block_size):
+                    for j in range(block_size):
+                        if new_grid[block_row + i][block_col + j] != 0:
+                            existing_numbers.add(new_grid[block_row + i][block_col + j])
+
+                # Create a list of possible numbers for the block
+                possible_numbers = [num for num in range(1, self.size + 1) if num not in existing_numbers]
+
+                for i in range(block_size):
+                    for j in range(block_size):
+                        if new_grid[block_row + i][block_col + j] == 0:
+                            # Choose a random number from the possible numbers
+                            number = random.choice(possible_numbers)
+                            new_grid[block_row + i][block_col + j] = number
+                            # Remove the chosen number from the possible numbers
+                            possible_numbers.remove(number)
 
         self.grid = new_grid
 
@@ -95,3 +150,5 @@ def plot_distribution(data, xlabel, ylabel, title):
         plt.ylabel(ylabel)
         plt.title(title)
         plt.show()
+
+

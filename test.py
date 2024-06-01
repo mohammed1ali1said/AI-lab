@@ -67,3 +67,47 @@ def calc_box_fitness(matrix, starting_row_index, starting_column_index, box_row_
     # Return the number of unique elements
     return len(unique_elements)
 
+
+def inversion_mutation_sudoku(perm, original_row):
+    # Ensure perm and original_row are valid
+    assert len(perm) == 9 and len(original_row) == 9, "Both perm and original_row must be of length 9"
+
+    # Generate two random indices and sort them to ensure idx1 <= idx2
+    idx1, idx2 = sorted(random.sample(range(9), 2))
+
+    print("random indexes: ",idx1,idx2)
+    # Extract the sublist to be potentially reversed
+    sublist = perm[idx1:idx2 + 1]
+
+    # Identify elements to be reversed
+    elements_to_reverse = [sublist[i - idx1] for i in range(idx1, idx2 + 1) if original_row[i] == 0]
+
+    # Reverse the selected elements
+    reversed_elements = elements_to_reverse[::-1]
+
+    # Place the reversed elements back in perm at the appropriate positions
+    reverse_index = 0
+    for i in range(idx1, idx2 + 1):
+        if original_row[i] == 0:
+            perm[i] = reversed_elements[reverse_index]
+            reverse_index += 1
+
+    return perm
+
+
+### Test Function
+
+def test_inversion_mutation_sudoku():
+    perm = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    original_row = [0, 0, 0, 2, 6, 0, 7, 0, 1]
+
+    print("Original perm:", perm)
+    print("Original row:", original_row)
+
+    mutated_perm = inversion_mutation_sudoku(perm, original_row)
+
+    print("Mutated perm:", mutated_perm)
+
+
+# Run the test
+test_inversion_mutation_sudoku()
