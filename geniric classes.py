@@ -148,34 +148,6 @@ def calc_box_fitness(matrix, starting_row_index, starting_column_index, box_row_
 
 
 
-def enhance_grid_if_possible(grid,originalGrid,size,currentGridFitness):
-    current_enhanced_grid = []
-    current_enhanced_grid_fitness = currentGridFitness
-    copied_grid = copy.deepcopy(grid)
-    for i in range(0,len(grid)-1):
-            currentRow = grid[i]
-            original_row = originalGrid[i]
-            missing_numbers = mut.find_missing_numbers(currentRow)
-            duplicate_indexes = mut.find_duplicate_indices(currentRow)
-            for idx in duplicate_indexes:
-                if (original_row[idx] == 0):
-                    for number in missing_numbers:
-                        copied_grid[i][idx] = number
-                        currentFitness = calc_fitness_sudoku_general(copied_grid)
-                        if currentFitness > currentGridFitness:
-                            if currentFitness > current_enhanced_grid_fitness:
-                                current_enhanced_grid = copy.deepcopy(copied_grid)
-                                current_enhanced_grid_fitness = currentFitness
-
-                        copied_grid = copy.deepcopy(grid)
-
-
-    if(current_enhanced_grid_fitness > currentGridFitness):
-        return current_enhanced_grid
-
-    else:
-        return grid
-
 # Example Sudoku grid (0 represents empty cells)
 input_sudoku_grid_easy1 = [
     [0, 0, 0, 2, 6, 0, 7, 0, 1],
@@ -400,9 +372,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 child_grid =com.pmx_crossover_sudoku_grid_block(parent1,parent2,game) # returns 1 child grid
                 #child_grid = com.pmx_crossover_sudoku_grid(parent1, parent2,input_sudoku_grid)  # returns 1 child grid
 
-
                 child = objects.SudokuIndividual(child_grid,len(game)) # create a new born sudoku individual
-                #child.grid = enhance_grid_if_possible(child.grid,game,len(game),calc_fitness_sudoku_general(child.grid))
+
             elif problem == "sudoku" and crossover_method == "cx":
                 pass
 

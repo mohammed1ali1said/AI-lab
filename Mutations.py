@@ -1,9 +1,10 @@
 import random
 import math
 
-def transpose_matrix(matrix):
+
+def transpose_matrix(matrix): # takes a matrix and transposes it
     return [list(row) for row in zip(*matrix)]
-def mutate(individual):
+def mutate(individual): # takes an individual and mutates it. (this is for the string individual on the string problem)
     target = list("Hello, world!")
     random_position = random.randint(0, len(target) - 1)  # get a random position for character to mutate
     random_char = chr(random.randint(32, 126))
@@ -12,7 +13,7 @@ def mutate(individual):
 
 
 
-def inversion_mutation_sudoku_row(perm, original_row,size):
+def inversion_mutation_sudoku_row(perm, original_row,size): # takes a row, and the original row in the input matrix. takes also the size of the row. and applies inversion mutation on the row.
 
     # Ensure perm and original_row are valid
     assert len(perm) == size and len(original_row) == size, "Both perm and original_row must be of length size"
@@ -39,9 +40,9 @@ def inversion_mutation_sudoku_row(perm, original_row,size):
 
     return perm
 
-def inversion_mutation_sudoku_grid(grid,originalGrid,size):
+def inversion_mutation_sudoku_grid(grid,originalGrid,size): # takes a grid, and the original input grid, and the size. and applies inversion mutation on all the grid.
     mutated_grid = []
-    for row1,row2 in zip(grid,originalGrid):
+    for row1,row2 in zip(grid,originalGrid): # apply inversion on each row
         mutated_row = inversion_mutation_sudoku_row(row1,row2,size)
         mutated_grid.append(mutated_row)
 
@@ -49,7 +50,7 @@ def inversion_mutation_sudoku_grid(grid,originalGrid,size):
 
 
 
-def find_duplicate_indices(perm):
+def find_duplicate_indices(perm): # takes a row (permutation) and returns a list of indexes of equal elements.
     duplicates = []
     for i in range(0,len(perm)):
        for j in range(0,len(perm)): # iterate over the indexes of perm
@@ -62,14 +63,14 @@ def find_duplicate_indices(perm):
     return duplicates
 
 
-def find_missing_numbers(perm):
+def find_missing_numbers(perm): # takes a permutation and finds the missing numbers, from 1 to the length of the permutation
     missing_numbers = []
     for i in range(1,len(perm)+1):
         if i not in perm:
             missing_numbers.append(i)
 
     return missing_numbers
-def inversion_mutation_sudoku_grid_new(grid,originalGrid,size):
+def inversion_mutation_sudoku_grid_new(grid,originalGrid,size): # this function applies inversion mutation only on columns that contain duplicates
     mutated_grid = grid
     for row1,row2 in zip(grid,originalGrid):
         duplicate_indexes = find_duplicate_indices(row1)
@@ -86,7 +87,7 @@ def inversion_mutation_sudoku_grid_new(grid,originalGrid,size):
 
 
 
-def inversion_mutation_sudoku_columns(grid, originalGrid):
+def inversion_mutation_sudoku_columns(grid, originalGrid): # applies an inversion mutation on the given grid, but the inversions are made on columns and not rows
     # Transpose the grid to work with columns as rows
     transposed_grid = transpose_matrix(grid)
     transposed_original = transpose_matrix(originalGrid)
@@ -101,11 +102,11 @@ def inversion_mutation_sudoku_columns(grid, originalGrid):
 
     return mutated_grid
 
-def block_to_row(block):
+def block_to_row(block): # changes a given block to a row
     return [num for row in block for num in row]
 
 
-def row_to_block(lst):
+def row_to_block(lst): # changes a given row to a bock. for example it takes a permutation of size 9 (list of size 9) . and makes it a block of 3x3
     # Calculate the size of the block (must be a perfect square)
     size = int(math.sqrt(len(lst)))
     assert size * size == len(lst), "List length must be a perfect square"
@@ -114,14 +115,14 @@ def row_to_block(lst):
     return [lst[i * size:(i + 1) * size] for i in range(size)]
 
 
-def extract_column(grid, col_index):
+def extract_column(grid, col_index): # given a grid extract the column at given index
     return [row[col_index] for row in grid]
-def extract_3x3_block(grid, start_row, start_col):
+def extract_3x3_block(grid, start_row, start_col): # given a grid extract a block at the given coordinates.
     # Extract the 3x3 block
     block = [row[start_col:start_col + 3] for row in grid[start_row:start_row + 3]]
     return block
 
-def extract_random_3x3_block(grid):
+def extract_random_3x3_block(grid): # extracts a random 3x3 block from a sudoku grid.
     # Generate random indices for the starting point of the 3x3 block
     start_row = random.randint(0, 2) * 3
     start_col = random.randint(0, 2) * 3
@@ -131,7 +132,7 @@ def extract_random_3x3_block(grid):
 
     return start_row,start_col,block
 
-def extract_blocks(grid,size):
+def extract_blocks(grid,size): # extracts all blocks from a grid
     blocks = []
     block_size = int(math.sqrt(size))
     for i in range(0, size, block_size):
@@ -141,7 +142,7 @@ def extract_blocks(grid,size):
     return blocks
 
 
-def reconstruct_grid(blocks,size):
+def reconstruct_grid(blocks,size): # reconstructs a grid from given blocks
     block_size = int(math.sqrt(size))
     grid = [[0]*size for _ in range(size)]
     block_index = 0
@@ -152,7 +153,7 @@ def reconstruct_grid(blocks,size):
             for x in range(block_size):
                 grid[i+x][j:j+block_size] = block[x]
     return grid
-def scramble_mutation_block(block,original_block):
+def scramble_mutation_block(block,original_block): # takes a block and applies scramble mutation on it
     block_as_row = block_to_row(block)
     orig_block_as_row = block_to_row(original_block)
 
@@ -162,7 +163,7 @@ def scramble_mutation_block(block,original_block):
     return scramble_result_block
 
 
-def scramble_mutation_sudoku_grid_block(grid,original_grid,size):
+def scramble_mutation_sudoku_grid_block(grid,original_grid,size): # takes a grid and applies scramble mutation on each block of 3x3
 
     gridBlocks = extract_blocks(grid,size)
     originalGridBlocks = extract_blocks(original_grid,size)
@@ -172,7 +173,7 @@ def scramble_mutation_sudoku_grid_block(grid,original_grid,size):
 
     crossed_grid = reconstruct_grid(crossed_blocks,size)
     return crossed_grid
-def scramble_mutation(perm, original_row):
+def scramble_mutation(perm, original_row): # takes a permutation and applies scramble mutation
 
     n = len(original_row)
 
@@ -188,7 +189,7 @@ def scramble_mutation(perm, original_row):
 
     return perm
 
-def scramble_mutation_sudoku_grid(grid,original_grid):
+def scramble_mutation_sudoku_grid(grid,original_grid): # takes a grid and applies scramble mutation on each row
     result = []
     for i in range(0,len(grid)):
         result.append(scramble_mutation(grid[i],original_grid[i]))
@@ -196,7 +197,7 @@ def scramble_mutation_sudoku_grid(grid,original_grid):
     return result
 
 
-def replacement_mutation(grid,original_grid):
+def replacement_mutation(grid,original_grid): # takes a grid, and applies replacement mutation on each row
 
     for i in  range(0,len(grid)):
         random_idx = random.randint(0,8)
