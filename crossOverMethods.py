@@ -156,23 +156,5 @@ def cx_crossover_sudoku(parent1, parent2,original_row): # applies cx crossover o
 
 
 
-# block1_test = [[1,2,4],[3,4,5],[6,7,8]]
-# block2_test = [[2,3,5],[4,5,6],[7,8,9]]
-# original_block = [[1,0,0],[0,4,0],[6,0,8]]
-#
-# result1,result2 = pmx_crossover_sudoku_block(block1_test,block2_test,original_block)
-# for row in block1_test:
-#     print(row)
-# print("---------------------------")
-# for row in result1:
-#     print(row)
-#
-#
-# print(" ")
-# for row in block2_test:
-#     print(row)
-# print("---------------------------")
-# for row in result2:
-#     print(row)
 
 
