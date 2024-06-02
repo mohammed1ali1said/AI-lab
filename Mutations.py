@@ -12,7 +12,7 @@ def mutate(individual):
 
 
 
-def inversion_mutation_sudoku(perm, original_row,size):
+def inversion_mutation_sudoku_row(perm, original_row,size):
 
     # Ensure perm and original_row are valid
     assert len(perm) == size and len(original_row) == size, "Both perm and original_row must be of length size"
@@ -42,7 +42,7 @@ def inversion_mutation_sudoku(perm, original_row,size):
 def inversion_mutation_sudoku_grid(grid,originalGrid,size):
     mutated_grid = []
     for row1,row2 in zip(grid,originalGrid):
-        mutated_row = inversion_mutation_sudoku(row1,row2,size)
+        mutated_row = inversion_mutation_sudoku_row(row1,row2,size)
         mutated_grid.append(mutated_row)
 
     return mutated_grid
@@ -78,13 +78,11 @@ def inversion_mutation_sudoku_grid_new(grid,originalGrid,size):
                 if row2[index] == 0:
                     column = [row[index] for row in grid]
                     original_column = [row[index] for row in originalGrid]
-                    mutated_column = inversion_mutation_sudoku(column,original_column,size)
+                    mutated_column = inversion_mutation_sudoku_row(column,original_column,size)
                     for i in range(0,size):
                         mutated_grid[i][index] = mutated_column[i]
 
     return mutated_grid
-
-
 
 
 
@@ -95,7 +93,7 @@ def inversion_mutation_sudoku_columns(grid, originalGrid):
 
     mutated_transposed_grid = []
     for col1, col2 in zip(transposed_grid, transposed_original):
-        mutated_col = inversion_mutation_sudoku(col1, col2,4)
+        mutated_col = inversion_mutation_sudoku_row(col1, col2,4)
         mutated_transposed_grid.append(mutated_col)
 
     # Transpose back to get the final mutated grid
@@ -114,6 +112,24 @@ def row_to_block(lst):
 
     # Convert the list to a list of lists (block)
     return [lst[i * size:(i + 1) * size] for i in range(size)]
+
+
+def extract_column(grid, col_index):
+    return [row[col_index] for row in grid]
+def extract_3x3_block(grid, start_row, start_col):
+    # Extract the 3x3 block
+    block = [row[start_col:start_col + 3] for row in grid[start_row:start_row + 3]]
+    return block
+
+def extract_random_3x3_block(grid):
+    # Generate random indices for the starting point of the 3x3 block
+    start_row = random.randint(0, 2) * 3
+    start_col = random.randint(0, 2) * 3
+
+    # Extract the 3x3 block
+    block = [row[start_col:start_col + 3] for row in grid[start_row:start_row + 3]]
+
+    return start_row,start_col,block
 
 def extract_blocks(grid,size):
     blocks = []
@@ -182,3 +198,72 @@ def scramble_mutation_sudoku_grid(grid,original_grid):
 
 # list_Test = [1,5,4,5,6,7,9,5,2]
 # print(find_missing_numbers(list_Test))
+
+# sudoku_grid = [
+#     [5, 3, 0, 0, 7, 0, 0, 0, 0],
+#     [6, 0, 0, 1, 9, 5, 0, 0, 0],
+#     [0, 9, 8, 5, 0, 0, 0, 6, 0],
+#     [8, 0, 0, 7, 6, 0, 0, 0, 3],
+#     [4, 0, 0, 8, 0, 3, 0, 0, 1],
+#     [7, 0, 0, 9, 2, 0, 0, 0, 6],
+#     [0, 6, 0, 0, 0, 0, 2, 8, 0],
+#     [0, 0, 0, 4, 1, 9, 0, 0, 5],
+#     [0, 0, 0, 0, 8, 0, 0, 7, 9]
+# ]
+#
+# sudoku_grid_original = [
+#     [5, 3, 8, 6, 7, 0, 0, 0, 0],
+#     [6, 0, 3, 1, 9, 5, 0, 4, 0],
+#     [0, 9, 8, 0, 0, 0, 0, 6, 1],
+#     [8, 0, 2, 0, 6, 0, 0, 0, 3],
+#     [4, 0, 0, 0, 5, 3, 0, 0, 1],
+#     [7, 0, 0, 0, 2, 0, 0, 0, 6],
+#     [0, 6, 0, 0, 0, 7, 2, 8, 0],
+#     [0, 0, 0, 4, 1, 9, 0, 0, 5],
+#     [0, 0, 0, 0, 8, 0, 0, 7, 9]
+# ]
+#
+# row,col,random_block = extract_random_3x3_block(sudoku_grid)
+# roww = row
+# coll = col
+# print("coordinate for chosen block: ", (row,col))
+# # print("Random 3x3 block:")
+# # for row in random_block:
+# #     print(row)
+#
+#
+# block = extract_3x3_block(sudoku_grid,row,col)
+#
+# mutated_block = scramble_mutation_block(random_block,block)
+# for i in range(0,len(mutated_block)):
+#     for j in range(0,len(mutated_block)):
+#         mutated_block[i][j] += 1
+# print("block is:")
+# for row in block:
+#     print(row)
+#
+# print("mutated block:")
+# for row in mutated_block:
+#     print(row)
+#
+# for i in range(0, 3):
+#     for j in range(0, 3):
+#         sudoku_grid[roww + i][coll + j] = mutated_block[i][j]
+#
+# for row in sudoku_grid:
+#     print(row)
+
+
+# random_col_index = random.randint(0, 8)
+# print("random col index: ", random_col_index)
+# extracted_column = extract_column(sudoku_grid, 3)
+# print("extracted col: ",extracted_column)
+# original_column = extract_column(sudoku_grid_original, 3)
+# print("original col: ",original_column)
+# mutated_column = scramble_mutation(extracted_column, original_column)
+# print("mutated col:",mutated_column)
+# for i in range(0, len(sudoku_grid)):
+#     sudoku_grid[i][3] = mutated_column[i]
+#
+# for row in sudoku_grid:
+#     print(row)
