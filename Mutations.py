@@ -196,6 +196,18 @@ def scramble_mutation_sudoku_grid(grid,original_grid):
     return result
 
 
+def replacement_mutation(grid,original_grid):
+
+    for i in  range(0,len(grid)):
+        random_idx = random.randint(0,8)
+
+        while(original_grid[i][random_idx] == 0):
+            random_idx = random.randint(0, 8)
+
+
+        random_num = random.randint(1,9)
+        grid[i][random_idx] = random_num
+    return grid
 # list_Test = [1,5,4,5,6,7,9,5,2]
 # print(find_missing_numbers(list_Test))
 

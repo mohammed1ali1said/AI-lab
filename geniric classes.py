@@ -255,7 +255,7 @@ small_sudoku_grid = [
 def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem):
 
     population = []
-    game = input_sudoku_grid_intermediate1
+    game = input_sudoku_grid_hard2
     optimal_fitness = 243
     for i in range(pop_size):
         if problem == "strings":
@@ -298,12 +298,16 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
         fitnesses = [fitness_func(individual) for individual in population]
 
+
+
         current_best_indiv_index = 0
         current_best_fitness = 0
         for i in range(0,len(fitnesses)):
             if fitnesses[i] > current_best_fitness:
                 current_best_fitness = fitnesses[i]
                 current_best_indiv_index = i
+
+
 
 
         best_indiv = population[current_best_indiv_index]
@@ -358,7 +362,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 last_n_keys = [key for key, value in sorted_by_values[-elite_size:]]
                 elites = [population[i] for i in last_n_keys]
 
-
+            if parent_selection_method == "elitism":
+                elites = parentSelection.elitism(population, pop_size, fitnesses, elite_size)
 
 
 
@@ -416,6 +421,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 pass
 
             # MUTATION
+
             ga_mutation = mutation_rate * sys.maxsize
             # if generation_counter > 0:
             #   ga_mutation =  ga_mutation / (2*generation_counter)
@@ -436,12 +442,18 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                         child.grid[random_row_index][i] = mutated_row[i]
 
                 if problem == "sudoku" and mutation_method == "scramble":
-                    # child.grid = mut.scramble_mutation_sudoku_grid(child.grid,input_sudoku_grid)
-                    # child_grid_transpoed = com.transpose_matrix(child.grid)
-                    # input_sudoku_grid_transposed = com.transpose_matrix(input_sudoku_grid)
-                    # result_transposed = mut.scramble_mutation_sudoku_grid(child_grid_transpoed,input_sudoku_grid_transposed)
-                    # child.grid = com.transpose_matrix(result_transposed)
                     random_number = random.random()
+                    if random_number > 0 and random_number < 0.33:
+                        child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game, len(game))
+                    if random_number >= 0.33  and random_number < 0.66:
+                        child.grid = mut.scramble_mutation_sudoku_grid(child.grid,game)
+                    if random_number >= 0.66 and random_number < 1:
+                        child_grid_transpoed = com.transpose_matrix(child.grid)
+                        input_sudoku_grid_transposed = com.transpose_matrix(game)
+                        result_transposed = mut.scramble_mutation_sudoku_grid(child_grid_transpoed,input_sudoku_grid_transposed)
+                        child.grid = com.transpose_matrix(result_transposed)
+
+
                     # if random_number > 0.3 :
                     #     child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game,len(game))
                     # if random_number <= 0.3 :
@@ -481,7 +493,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                     #         child.grid[row + i][col + j] = block_after_mutation[i][j]
 
                     #child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game, len(game))
-
+                if problem == "sudoku" and mutation_method == "replacement":
+                    child.grid = mut.replacement_mutation(child.grid,game)
                 if problem == "binpack" and mutation_method == "inversion":
                     child.grid = mut.inversion_mutation_sudoku_grid_new(child.grid,game,len(game))
                 if problem == "binpack" and mutation_method == "scramble":
@@ -512,7 +525,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     return best_individual, best_fitness
 
 
-bestIndividual,bestFitness = genetic_algorithm(500, 9, calc_fitness_sudoku, 1500, 0.95, "pmx","scramble","tournament","sudoku")
+bestIndividual,bestFitness = genetic_algorithm(6000, 9, calc_fitness_sudoku, 1500, 0.6, "pmx","sramble","elitism","sudoku")
 
 def is_valid_sudoku(grid):
     size = len(grid)
