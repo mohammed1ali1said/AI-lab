@@ -255,14 +255,15 @@ small_sudoku_grid = [
 def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem):
 
     population = []
-    game = input_sudoku_grid_hard2
+    game = input_sudoku_grid_intermediate1
     optimal_fitness = 243
     for i in range(pop_size):
         if problem == "strings":
             individual = objects.StringIndividual(num_genes)
         if problem == "sudoku":
             individual = objects.SudokuIndividual(game,len(game))
-            individual.init_random_sudoku_individual_byBlocks(game)
+            individual.init_random_sudoku_grid(game)
+
             # if i>= 0 and i<220:
             #     individual = objects.SudokuIndividual(game,len(game))
             #     individual.init_random_sudoku_individual_byBlocks(game)
@@ -417,7 +418,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             # MUTATION
             ga_mutation = mutation_rate * sys.maxsize
             # if generation_counter > 0:
-            #   ga_mutation =  ga_mutation / (4*generation_counter)
+            #   ga_mutation =  ga_mutation / (2*generation_counter)
 
             if random.random() < ga_mutation:
                 if problem == "strings":
@@ -446,7 +447,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                     # if random_number <= 0.3 :
                     #     child.grid = mut.scramble_mutation_sudoku_grid(child.grid,game)
 
-                    # if random_number <0.8:
+                    # if random_number <0.9:
                     #     row,col,block = mut.extract_random_3x3_block(child.grid)
                     #     original_block = mut.extract_3x3_block(game,row,col)
                     #     block_after_mutation = mut.scramble_mutation_block(block,original_block)
@@ -454,7 +455,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                     #         for j in range(0, 3):
                     #             child.grid[row + i][col + j] = block_after_mutation[i][j]
                     #
-                    # if random_number >=0.8 and random_number < 0.9:
+                    # if random_number >=0.9 and random_number < 0.95:
                     #     random_row_index = random.randint(0, 8)
                     #     original_row = game[random_row_index]
                     #     current_row = child.grid[random_row_index]
@@ -463,7 +464,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                     #         child.grid[random_row_index][i] = mutated_row[i]
                     #
                     #
-                    # if random_number >= 0.9 and random_number < 1 :
+                    # if random_number >= 0.95 and random_number < 1 :
                     #     random_col_index = random.randint(0,8)
                     #     extracted_column = mut.extract_column(child.grid,random_col_index)
                     #     original_column = mut.extract_column(game,random_col_index)
@@ -472,12 +473,14 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                     #     for i in range(0,len(game)):
                     #         child.grid[i][random_col_index] = mutated_column[i]
 
-                    row, col, block = mut.extract_random_3x3_block(child.grid)
-                    original_block = mut.extract_3x3_block(game, row, col)
-                    block_after_mutation = mut.scramble_mutation_block(block, original_block)
-                    for i in range(0, 3):
-                        for j in range(0, 3):
-                            child.grid[row + i][col + j] = block_after_mutation[i][j]
+                    # row, col, block = mut.extract_random_3x3_block(child.grid)
+                    # original_block = mut.extract_3x3_block(game, row, col)
+                    # block_after_mutation = mut.scramble_mutation_block(block, original_block)
+                    # for i in range(0, 3):
+                    #     for j in range(0, 3):
+                    #         child.grid[row + i][col + j] = block_after_mutation[i][j]
+
+                    #child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game, len(game))
 
                 if problem == "binpack" and mutation_method == "inversion":
                     child.grid = mut.inversion_mutation_sudoku_grid_new(child.grid,game,len(game))
@@ -509,7 +512,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     return best_individual, best_fitness
 
 
-bestIndividual,bestFitness = genetic_algorithm(25000, 9, calc_fitness_sudoku, 1500, 0.7, "pmx","scramble","tournament","sudoku")
+bestIndividual,bestFitness = genetic_algorithm(500, 9, calc_fitness_sudoku, 1500, 0.95, "pmx","scramble","tournament","sudoku")
 
 def is_valid_sudoku(grid):
     size = len(grid)
