@@ -489,3 +489,4 @@ rowsvalid,colsvalid,blocksvalid = is_valid_sudoku(bestIndividual.grid)
 print("rows valid: ", rowsvalid)
 print("cols valid: ",colsvalid)
 print("blocks valid: ",blocksvalid)
+

@@ -150,9 +150,40 @@ def pmx_crossover_sudoku_grid_block(parent1:objects.SudokuIndividual,parent2:obj
 
     crossed_grid = reconstruct_grid(crossed_blocks,len(firstParent))
     return crossed_grid
-def cx_crossover_sudoku(parent1, parent2,original_row): # applies cx crossover on 2 given permutations (2 rows in the gird in our case)
 
-    pass
+
+
+def find_cycles(parent1, parent2): # returns a list of cycles where each cycle is represented as a list of indices
+    """Finds cycles in two parent permutations."""
+    cycles = []
+    visited = [False] * len(parent1)
+    for i in range(len(parent1)):
+        if not visited[i]:
+            cycle = []
+            x = i
+            while not visited[x]:
+                cycle.append(x)
+                visited[x] = True
+                x = parent1.index(parent2[x])
+            cycles.append(cycle)
+    return cycles
+
+
+def cx_crossover(parent1, parent2):
+    """Performs cycle crossover on two parent permutations."""
+    assert len(parent1) == len(parent2), "Permutations must be of the same length"
+
+    offspring1 = parent1[:]
+    offspring2 = parent2[:]
+
+    cycles = find_cycles(parent1, parent2)
+
+    for i, cycle in enumerate(cycles):
+        if i % 2 == 0:  # Swap the elements of the cycle in even-indexed cycles
+            for index in cycle:
+                offspring1[index], offspring2[index] = offspring2[index], offspring1[index]
+
+    return offspring1, offspring2
 
 
 
