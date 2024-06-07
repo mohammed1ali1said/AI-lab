@@ -246,7 +246,7 @@ small_sudoku_grid = [
 # ]
 
 
-def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem):
+def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem,problem_path):
     parameters = {
         'Problem' : problem,
         'Population Size': pop_size,
@@ -513,6 +513,7 @@ def main():
     parser.add_argument('--mutation_method', type=str, default="scramble",choices=["scramble","inversion"], help='Mutation Method')
     parser.add_argument('--parent_selection', type=str, default="elitism", help='Parent Selection')
     parser.add_argument('--problem', type=str, default="sudoku", help='Problem to test')
+    parser.add_argument('--problem_path', type=str, default="//", help='Path to the problem file')
     args = parser.parse_args()
 
     pop_size = args.pop_size
@@ -523,10 +524,10 @@ def main():
     mutation_method = args.mutation_method
     problem = args.problem
     parent_selection = args.parent_selection
-
+    problem_path = args.problem_path
     best_individual, best_fitness = genetic_algorithm(2000, 9, calc_fitness_sudoku, 300,
                                                     0, "pmx", "scramble",
-                                                    "elitism", "sudoku")
+                                                    "elitism", "sudoku",problem_path = "//")
 
     # best_individual, best_fitness = genetic_algorithm(pop_size, num_genes, calc_fitness_sudoku, max_generations,
     #                                                   mutation_rate, crossover_method, mutation_method,
