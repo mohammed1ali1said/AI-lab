@@ -153,10 +153,15 @@ def pmx_crossover_sudoku_grid_block(parent1:objects.SudokuIndividual,parent2:obj
 
 
 
-def find_cycles(parent1, parent2): # returns a list of cycles where each cycle is represented as a list of indices
+
+def find_cycles(parent1, parent2):
     """Finds cycles in two parent permutations."""
+    if len(parent1) != len(parent2):
+        raise ValueError("parent1 and parent2 must be of the same length")
+
     cycles = []
     visited = [False] * len(parent1)
+
     for i in range(len(parent1)):
         if not visited[i]:
             cycle = []
@@ -164,9 +169,29 @@ def find_cycles(parent1, parent2): # returns a list of cycles where each cycle i
             while not visited[x]:
                 cycle.append(x)
                 visited[x] = True
-                x = parent1.index(parent2[x])
+                if parent2[x] in parent1:
+                    x = parent1.index(parent2[x])
+                else:
+                    #raise ValueError(f"Element {parent2[x]} from parent2 is not in parent1")
+                    return 'no cycles'
             cycles.append(cycle)
     return cycles
+
+
+# def find_cycles(parent1, parent2): # returns a list of cycles where each cycle is represented as a list of indices
+#     """Finds cycles in two parent permutations."""
+#     cycles = []
+#     visited = [False] * len(parent1)
+#     for i in range(len(parent1)):
+#         if not visited[i]:
+#             cycle = []
+#             x = i
+#             while not visited[x]:
+#                 cycle.append(x)
+#                 visited[x] = True
+#                 x = parent1.index(parent2[x])
+#             cycles.append(cycle)
+#     return cycles
 
 
 def cx_crossover(parent1, parent2):
@@ -177,6 +202,8 @@ def cx_crossover(parent1, parent2):
     offspring2 = parent2[:]
 
     cycles = find_cycles(parent1, parent2)
+    if cycles == 'no cycles':
+        return parent1
 
     for i, cycle in enumerate(cycles):
         if i % 2 == 0:  # Swap the elements of the cycle in even-indexed cycles
@@ -185,7 +212,16 @@ def cx_crossover(parent1, parent2):
 
     return offspring1, offspring2
 
+def cx_crossover_sudoku(parent1:objects.SudokuIndividual,parent2:objects.SudokuIndividual,original_grid):
+    parent_grid1 = parent1.grid
+    parent_grid2 = parent2.grid
+    result_grid = []
+    for row1,row2 in zip(parent_grid1,parent_grid2):
+        new_row = cx_crossover(row1,row2)
+        for element1,element2 in zip(new_row,original_grid): # if the original input row was changed dont take this child.
+            if element2 != 0 and element1 != element2:
+                result_grid.append(row1)
+            else:
+                result_grid.append(new_row)
 
-
-
-
+    return result_grid

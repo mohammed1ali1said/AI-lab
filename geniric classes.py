@@ -247,6 +247,16 @@ small_sudoku_grid = [
 
 
 def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem):
+    parameters = {
+        'Problem' : problem,
+        'Population Size': pop_size,
+        'Crossover': crossover_method,
+        'Mutation Rate': mutation_rate,
+        'Mutation Method': mutation_method,
+        'Selection Method': parent_selection_method,
+        'Max generations': max_generations
+
+    }
     current_bf = 0
     population = []
     game = input_sudoku_grid_easy1
@@ -313,7 +323,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
             titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
             dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-            objects.combine_plots(dataSets,xLabels,yLabels,titles)
+            objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters)
             return best_indiv,current_best_fitness
 
 
@@ -412,6 +422,10 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 child = objects.SudokuIndividual(child_grid,len(game)) # create a new born sudoku individual
 
             elif problem == "sudoku" and crossover_method == "cx":
+                # parent1 = random.choice(elites)
+                # parent2 = random.choice(elites)
+                # child_grid = com.cx_crossover_sudoku(parent1,parent2,game)
+                # child = objects.SudokuIndividual(child_grid, len(game))  # create a new born sudoku individual
                 pass
 
             elif problem == "binpack" and crossover_method == "pmx":
@@ -484,9 +498,47 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     return best_individual, best_fitness
 
 
-bestIndividual,bestFitness = genetic_algorithm(1500, 9, calc_fitness_sudoku, 300,
-                                               0, "pmx","scramble",
-                                               "elitism","sudoku")
+# bestIndividual,bestFitness = genetic_algorithm(1500, 9, calc_fitness_sudoku, 300,
+#                                                0, "pmx","scramble",
+#                                                "elitism","sudoku")
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Genetic Algorithm Parameters')
+    parser.add_argument('--pop_size', type=int, default=100, help='Population size')
+    parser.add_argument('--max_generations', type=int, default=100, help='Maximum number of generations')
+    parser.add_argument('--mutation_rate', type=float, default=0.25, help='Mutation rate')
+    parser.add_argument('--crossover_method', type=str, default="uniform", choices=["uniform", "single", "two","pmx","cx"], help='Crossover method')
+    parser.add_argument('--mutation_method', type=str, default="scramble",choices=["scramble","inversion"], help='Mutation Method')
+    parser.add_argument('--parent_selection', type=str, default="elitism", help='Parent Selection')
+    parser.add_argument('--problem', type=str, default="sudoku", help='Problem to test')
+    args = parser.parse_args()
+
+    pop_size = args.pop_size
+    num_genes = 13
+    max_generations = args.max_generations
+    mutation_rate = args.mutation_rate
+    crossover_method = args.crossover_method
+    mutation_method = args.mutation_method
+    problem = args.problem
+    parent_selection = args.parent_selection
+
+    best_individual, best_fitness = genetic_algorithm(2000, 9, calc_fitness_sudoku, 300,
+                                                    0, "pmx", "scramble",
+                                                    "elitism", "sudoku")
+
+    # best_individual, best_fitness = genetic_algorithm(pop_size, num_genes, calc_fitness_sudoku, max_generations,
+    #                                                   mutation_rate, crossover_method, mutation_method,
+    #                                                   parent_selection, problem)
+
+    # print("Best individual:", ''.join(best_individual))
+    # print("Best fitness:", best_fitness)
+
+
+if __name__ == "__main__":
+    main()
+
 
 def is_valid_sudoku(grid):
     size = len(grid)
@@ -519,15 +571,15 @@ def is_valid_sudoku(grid):
     return rows_valid,cols_valid,blocks_valid
 
 
-if isinstance(bestIndividual,objects.SudokuIndividual):
-    print("Best individual: ")
-    for row in bestIndividual.grid:
-        print(row)
-
-print("Best fitness: ",bestFitness)
-
-rowsvalid,colsvalid,blocksvalid = is_valid_sudoku(bestIndividual.grid)
-print("rows valid: ", rowsvalid)
-print("cols valid: ",colsvalid)
-print("blocks valid: ",blocksvalid)
+# if isinstance(bestIndividual,objects.SudokuIndividual):
+#     print("Best individual: ")
+#     for row in bestIndividual.grid:
+#         print(row)
+#
+# print("Best fitness: ",bestFitness)
+#
+# rowsvalid,colsvalid,blocksvalid = is_valid_sudoku(bestIndividual.grid)
+# print("rows valid: ", rowsvalid)
+# print("cols valid: ",colsvalid)
+# print("blocks valid: ",blocksvalid)
 

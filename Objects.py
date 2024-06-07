@@ -152,41 +152,90 @@ class SudokuIndividual:
 def close_event():
     plt.close()
 
-def plot_distribution(data, xlabel, ylabel, title):
-    # Create a histogram
-        plt.figure(figsize=(10, 6))
-        plt.plot(data, marker='none', linestyle='-', color='b')
+# def plot_distribution(data, xlabel, ylabel, title):
+#     # Create a histogram
+#         plt.figure(figsize=(10, 6))
+#         plt.plot(data, marker='none', linestyle='-', color='b')
+#
+#         # Adding labels and title
+#         plt.xlabel(xlabel)
+#         plt.ylabel(ylabel)
+#         plt.title(title)
+#         plt.show()
+#
+# def plot_distribution_new(ax, data, xlabel, ylabel, title):
+#     """Creates a plot on the given axis."""
+#     ax.plot(data, marker='none', linestyle='-', color='b')
+#     ax.set_xlabel(xlabel)
+#     ax.set_ylabel(ylabel)
+#     ax.set_title(title)
+#
+# def combine_plots(datasets, xlabels, ylabels, titles):
+#     """Combines multiple plots into a single image."""
+#     # Number of plots
+#     n = len(datasets)
+#
+#     # Create a figure to hold the subplots
+#     fig, axs = plt.subplots(2, 3, figsize=(14, 8))
+#
+#     # Flatten the array of axes for easy iteration
+#     axs = axs.flatten()
+#
+#     # Create each subplot
+#     for i in range(n):
+#         plot_distribution_new(axs[i], datasets[i], xlabels[i], ylabels[i], titles[i])
+#
+#     # Adjust layout to prevent overlap
+#     plt.tight_layout()
+#
+#     # Display the combined plot
+#     plt.show()
 
-        # Adding labels and title
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.title(title)
-        plt.show()
 
-def plot_distribution_new(ax, data, xlabel, ylabel, title):
+
+def plot_distribution(ax, data, xlabel, ylabel, title):
     """Creates a plot on the given axis."""
     ax.plot(data, marker='none', linestyle='-', color='b')
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
 
-def combine_plots(datasets, xlabels, ylabels, titles):
-    """Combines multiple plots into a single image."""
-    # Number of plots
-    n = len(datasets)
+def plot_parameters(ax, parameters):
+    """Creates a text plot for the given parameters on the given axis."""
+    param_text = "\n".join([f"{key}: {value}" for key, value in parameters.items()])
+    ax.text(0.5, 0.5, param_text, fontsize=12, ha='center', va='center', wrap=True)
+    ax.axis('off')
+    ax.set_title('Algorithm Parameters')
+
+def combine_plots(datasets, xlabels, ylabels, titles, parameters):
+    """Combines multiple plots into a single image, including parameters."""
+    # Number of plots (plus one for parameters)
+    n = len(datasets) + 1
+
+    # Determine the grid size
+    cols = 3
+    rows = math.ceil(n / cols)
 
     # Create a figure to hold the subplots
-    fig, axs = plt.subplots(2, 3, figsize=(14, 8))
+    fig, axs = plt.subplots(rows, cols, figsize=(18, rows * 4))
 
     # Flatten the array of axes for easy iteration
     axs = axs.flatten()
 
-    # Create each subplot
-    for i in range(n):
-        plot_distribution_new(axs[i], datasets[i], xlabels[i], ylabels[i], titles[i])
+    # Plot the parameters in the first subplot
+    plot_parameters(axs[0], parameters)
+
+    # Create each subplot for the datasets
+    for i in range(1, n):
+        plot_distribution(axs[i], datasets[i-1], xlabels[i-1], ylabels[i-1], titles[i-1])
+
+    # Hide any unused subplots
+    for j in range(n, len(axs)):
+        fig.delaxes(axs[j])
 
     # Adjust layout to prevent overlap
     plt.tight_layout()
+
 
     # Display the combined plot
     plt.show()
