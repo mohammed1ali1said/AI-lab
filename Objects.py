@@ -1,3 +1,4 @@
+import copy
 import random
 
 import numpy as np
@@ -133,7 +134,14 @@ class SudokuIndividual:
 
         self.grid = new_grid
 
-
+    def init_random_sudoku_grid(self,input_grid):
+        # Create a deep copy of the input grid to modify
+        new_grid = [row[:] for row in input_grid]
+        for i in range(len(new_grid)):
+            for j in range(len(new_grid[i])):
+                if new_grid[i][j] == 0:  # Assuming empty cells are represented by 0
+                    new_grid[i][j] = random.randint(1, 9)
+        self.grid =   new_grid
     def print_sudoku_grid(self,input_grid):
         for row in input_grid:
             print(row)
@@ -150,5 +158,3 @@ def plot_distribution(data, xlabel, ylabel, title):
         plt.ylabel(ylabel)
         plt.title(title)
         plt.show()
-
-

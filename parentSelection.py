@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 
-def roulette_wheel_selection(fitnesses,num_parents=100):
+def roulette_wheel_selection(fitnesses,num_parents=2):
     total = sum(fitnesses)
     probs = []
     local_sum = 0
@@ -22,6 +22,7 @@ def roulette_wheel_selection(fitnesses,num_parents=100):
 
 
 def stochastic_universal_sampling(fitnesses, num_parents=2):
+    fitnesses = linear_scaling(4,3,fitnesses)
     total_fitness = sum(fitnesses)
     num_individuals = len(fitnesses)
     spacing = total_fitness / num_parents
@@ -83,4 +84,3 @@ def linear_scaling(scaling_factor,constant,fitnesses):
     for fit in fitnesses:
         scaled.append((fit*scaling_factor+constant))
     return scaled
-
