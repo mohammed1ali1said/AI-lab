@@ -5,6 +5,8 @@ import sys
 import time
 import math
 import matplotlib.pyplot as plt
+
+import Objects
 import crossOverMethods as com
 import Mutations as mut
 import parentSelection
@@ -147,6 +149,26 @@ def calc_box_fitness(matrix, starting_row_index, starting_column_index, box_row_
     return len(unique_elements)
 
 
+def top_average_selection_probability_ratio(fitness_values):
+    """Calculates the Top-Average Selection Probability Ratio."""
+    # Step 1: Calculate total fitness
+    total_fitness = sum(fitness_values)
+
+    # Step 2: Determine top fitness
+    top_fitness = max(fitness_values)
+
+    # Step 3: Compute average fitness
+    average_fitness = total_fitness / len(fitness_values)
+
+    # Step 4: Compute selection probabilities
+    selection_prob_top = top_fitness / total_fitness
+    selection_prob_avg = average_fitness / total_fitness
+
+    # Step 5: Calculate the ratio
+    ratio = selection_prob_top / selection_prob_avg
+
+    return ratio
+
 
 # Example Sudoku grid (0 represents empty cells)
 input_sudoku_grid_easy1 = [
@@ -227,7 +249,7 @@ small_sudoku_grid = [
 def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem):
     current_bf = 0
     population = []
-    game = input_sudoku_grid_hard2
+    game = input_sudoku_grid_easy1
     optimal_fitness = 243
     for i in range(pop_size):
         if problem == "strings":
@@ -245,6 +267,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
     generation_avg_fitnesses = []
     generation_avg_SD = []
+    generation_avg_variance = []
+    generation_top_avg_selection_ratio = []
     cpu_times = []
     elapsed_times = []
     elite_size = int(pop_size * 0.1)
@@ -278,13 +302,26 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         #     print(row)
         if(current_best_fitness == optimal_fitness):
             print("solution satisfied at generation: ", generation_counter)
+            # THESE PLOTTINGS WILL BE PLOTTED IN CASE THE ALGORITHM REAHCED THE CORRECT SOLUTION IN LESS GENERATIONS THAT num_Genrataions
+            # objects.plot_distribution(generation_avg_fitnesses, 'Generation', 'AVG', 'Fittness AVG distribution')
+            # objects.plot_distribution(generation_avg_SD, 'Generation', 'SD', 'Standard Deviation')
+            # Objects.plot_distribution(generation_avg_variance, 'Generation', 'VAR', 'Variance')
+            # objects.plot_distribution(generation_top_avg_selection_ratio,'Generation','TR','Top Ratio')
+            # objects.plot_distribution(cpu_times, "Generation", "Cpu-time", "Ticks")
+            #objects.plot_distribution(elapsed_times, "Generation", "Elapsead-time", "Elapsed")
+            xLabels = ['Generation','Generation','Generation','Generation','Generation','Generation']
+            yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
+            titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
+            dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
+            objects.combine_plots(dataSets,xLabels,yLabels,titles)
             return best_indiv,current_best_fitness
 
 
         Statistics_Manager = objects.statistics_manager(fitnesses)
         generation_avg_fitnesses.append(Statistics_Manager.avg_fittness_generation())
         generation_avg_SD.append(Statistics_Manager.Standard_deviation())
-
+        generation_avg_variance.append(Statistics_Manager.Standard_deviation() ** 2)
+        generation_top_avg_selection_ratio.append(top_average_selection_probability_ratio(fitnesses))
         # if  generation%20==0:
         #     Statistics_Manager.norm_and_plot()
 
@@ -430,13 +467,15 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         cpu_times.append(end_cpu - start_cpu)
         elapsed_times.append(end_elapsed - start_elapsed)
 
-
-
-    objects.plot_distribution(generation_avg_fitnesses, 'Generation', 'AVG', 'Fittness AVG distribution')
-    # objects.plot_distribution(generation_avg_SD, 'Generation', 'AVG', 'Standart Deviation')
-    # objects.plot_distribution(cpu_times,"Generation","Cpu-time","Ticks")
+    # THESE PLOTS WILL BE PLOTTED IN CASE THE SOLUTION REACHED THE GLOBAL OPTIMA
+    # objects.plot_distribution(generation_avg_fitnesses, 'Generation', 'AVG', 'Fittness AVG distribution')
+    # objects.plot_distribution(generation_avg_SD, 'Generation', 'SD', 'Standart Deviation')
+    # Objects.plot_distribution(generation_avg_variance, 'Generation', 'VAR', 'Variance')
+    # objects.plot_distribution(generation_top_avg_selection_ratio, 'Generation', 'avgSelc', 'Top Ratio')
+    # objects.plot_distribution(cpu_times, "Generation", "Cpu-time", "Ticks")
     # objects.plot_distribution(elapsed_times, "Generation", "Elapsead-time", "Elapsed")
 
+    dataSets = [generation_avg_fitnesses,generation_avg_SD,generation_avg_variance,generation_top_avg_selection_ratio,cpu_times,elapsed_times]
 
     best_individual = max(population, key=lambda individual: fitness_func(individual))
     best_fitness = fitness_func(best_individual)
@@ -445,7 +484,9 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     return best_individual, best_fitness
 
 
-bestIndividual,bestFitness = genetic_algorithm(8000, 9, calc_fitness_sudoku, 1500, 0.9, "pmx","scramble","elitism","sudoku")
+bestIndividual,bestFitness = genetic_algorithm(1500, 9, calc_fitness_sudoku, 300,
+                                               0, "pmx","scramble",
+                                               "elitism","sudoku")
 
 def is_valid_sudoku(grid):
     size = len(grid)

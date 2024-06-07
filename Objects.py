@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 
 import numpy as np
@@ -22,6 +23,9 @@ class statistics_manager:
             sum += (fitness - mean) ** 2
         ST = np.sqrt(sum / len(self.fitnesses))
         return ST
+
+
+
 
     def norm_and_plot(self):
         norm_min = 0
@@ -159,4 +163,30 @@ def plot_distribution(data, xlabel, ylabel, title):
         plt.title(title)
         plt.show()
 
+def plot_distribution_new(ax, data, xlabel, ylabel, title):
+    """Creates a plot on the given axis."""
+    ax.plot(data, marker='none', linestyle='-', color='b')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
 
+def combine_plots(datasets, xlabels, ylabels, titles):
+    """Combines multiple plots into a single image."""
+    # Number of plots
+    n = len(datasets)
+
+    # Create a figure to hold the subplots
+    fig, axs = plt.subplots(2, 3, figsize=(14, 8))
+
+    # Flatten the array of axes for easy iteration
+    axs = axs.flatten()
+
+    # Create each subplot
+    for i in range(n):
+        plot_distribution_new(axs[i], datasets[i], xlabels[i], ylabels[i], titles[i])
+
+    # Adjust layout to prevent overlap
+    plt.tight_layout()
+
+    # Display the combined plot
+    plt.show()
