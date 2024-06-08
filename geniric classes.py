@@ -5,13 +5,15 @@ import sys
 import time
 import math
 import matplotlib.pyplot as plt
+import binpacking as bp
+
+import Objects
 import crossOverMethods as com
 import Mutations as mut
 import parentSelection
 import parentSelection as ps
 import  Objects as objects
-import binpacking as bp
-
+import copy
 
 # STRINGS ORIGINAL FITNESS
 
@@ -59,10 +61,12 @@ def evaluation(genes):
 
 
 # SUDOKU FITNESS
-def calc_fitness_sudoku(sudoku_individual: objects.SudokuIndividual):
-    sudoku_grid = sudoku_individual.grid
+
+
+def calc_fitness_sudoku_general(sudoku_grid):
+
     size = len(sudoku_grid)
-    grid_len = len(sudoku_grid)
+    #grid_len = len(sudoku_grid)
     # for row in sudoku_grid:
     #     print(row)
     row_score_sum = 0
@@ -82,9 +86,34 @@ def calc_fitness_sudoku(sudoku_individual: objects.SudokuIndividual):
         for j in range(0, N, step_size):
             box_score_sum += calc_box_fitness(sudoku_grid,i,j,int(math.sqrt(size)))
 
-    # print("row sum: ",row_score_sum)
-    # print("column sum: ",col_score_sum)
-    # print("boxes sum: ", box_score_sum)
+
+    return row_score_sum+col_score_sum+box_score_sum
+
+
+def calc_fitness_sudoku(sudoku_individual: objects.SudokuIndividual):
+    sudoku_grid = sudoku_individual.grid
+    size = len(sudoku_grid)
+    #grid_len = len(sudoku_grid)
+    # for row in sudoku_grid:
+    #     print(row)
+    row_score_sum = 0
+    col_score_sum = 0
+    box_score_sum = 0
+
+    for i in range(0,len(sudoku_grid)):
+        row_score_sum += calc_row_fitness(sudoku_grid,i)
+
+    for i in range(0,len(sudoku_grid)):
+        col_score_sum += calc_col_fitness(sudoku_grid,i)
+
+    N = len(sudoku_grid)
+    step_size = int(math.sqrt(size))
+
+    for i in range(0, N, step_size):
+        for j in range(0, N, step_size):
+            box_score_sum += calc_box_fitness(sudoku_grid,i,j,int(math.sqrt(size)))
+
+
     return row_score_sum+col_score_sum+box_score_sum
 def calc_row_fitness(grid,index): # calculates the fitness of a rowat a certain index in the grid
     row_set = set(grid[index])
@@ -116,10 +145,61 @@ def calc_box_fitness(matrix, starting_row_index, starting_column_index, box_row_
     # Return the number of unique elements
     return len(unique_elements)
 
+def is_valid_sudoku(grid):
+    size = len(grid)
+    block_size = int(math.sqrt(size))
+    def is_valid_block(block):
+        block = [num for num in block if num != 0]
+        return len(block) == len(set(block))
+
+    rows_valid = True
+    cols_valid = True
+    blocks_valid = True
+
+    # Check rows
+    for row in grid:
+        if not is_valid_block(row):
+            rows_valid = False
+
+    # Check columns
+    for col in zip(*grid):
+        if not is_valid_block(col):
+            cols_valid = False
+
+    # Check 3x3 subgrids
+    for i in range(0, size, block_size):
+        for j in range(0, size, block_size):
+            block = [grid[x][y] for x in range(i, i + block_size) for y in range(j, j + block_size)]
+            if not is_valid_block(block):
+                blocks_valid = False
+
+    return rows_valid,cols_valid,blocks_valid
+
+
+
+def top_average_selection_probability_ratio(fitness_values):
+    """Calculates the Top-Average Selection Probability Ratio."""
+    # Step 1: Calculate total fitness
+    total_fitness = sum(fitness_values)
+
+    # Step 2: Determine top fitness
+    top_fitness = max(fitness_values)
+
+    # Step 3: Compute average fitness
+    average_fitness = total_fitness / len(fitness_values)
+
+    # Step 4: Compute selection probabilities
+    selection_prob_top = top_fitness / total_fitness
+    selection_prob_avg = average_fitness / total_fitness
+
+    # Step 5: Calculate the ratio
+    ratio = selection_prob_top / selection_prob_avg
+
+    return ratio
 
 
 # Example Sudoku grid (0 represents empty cells)
-input_sudoku_grid = [
+input_sudoku_grid_easy1 = [
     [0, 0, 0, 2, 6, 0, 7, 0, 1],
     [6, 8, 0, 0, 7, 0, 0, 9, 0],
     [1, 9, 0, 0, 0, 4, 5, 0, 0],
@@ -132,18 +212,86 @@ input_sudoku_grid = [
 ]
 
 
-def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem,path=''):
+input_sudoku_grid_easy2 = [
+    [1, 0, 0, 4, 8, 9, 0, 0, 6],
+    [7, 3, 0, 0, 0, 0, 0, 4, 0],
+    [0, 0, 0, 0, 0, 1, 2, 5, 9],
+    [0, 0, 7, 1, 2, 0, 6, 0, 0],
+    [5, 0, 0, 7, 0, 3, 0, 0, 8],
+    [0, 0, 6, 0, 9, 5, 7, 0, 0],
+    [9, 1, 4, 6, 0, 0, 0, 0, 0],
+    [0, 2, 0, 0, 0, 0, 0, 3, 7],
+    [8, 0, 0, 5, 1, 2, 0, 0, 4]
+]
 
+input_sudoku_grid_intermediate1 = [
+    [0, 2, 0, 6, 0, 8, 0, 0, 0],
+    [5, 8, 0, 0, 0, 9, 7, 0, 0],
+    [0, 0, 0, 0, 4, 0, 0, 0, 0],
+    [3, 7, 0, 0, 0, 0, 5, 0, 0],
+    [6, 0, 0, 0, 0, 0, 0, 0, 4],
+    [0, 0, 8, 0, 0, 0, 0, 1, 3],
+    [0, 0, 0, 0, 2, 0, 0, 0, 0],
+    [0, 0, 9, 8, 0, 0, 0, 3, 6],
+    [0, 0, 0, 3, 0, 6, 0, 9, 0]
+]
+
+input_sudoku_grid_hard1 =  [
+    [0, 0, 0, 6, 0, 0, 4, 0, 0],
+    [7, 0, 0, 0, 0, 3, 6, 0, 0],
+    [0, 0, 0, 0, 9, 1, 0, 8, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 5, 0, 1, 8, 0, 0, 0, 3],
+    [0, 0, 0, 3, 0, 6, 0, 4, 5],
+    [0, 4, 0, 2, 0, 0, 0, 6, 0],
+    [9, 0, 3, 0, 0, 0, 0, 0, 0],
+    [0, 2, 0, 0, 0, 0, 1, 0, 0],
+]
+
+input_sudoku_grid_hard2 = [
+    [2, 0, 0, 3, 0, 0, 0, 0, 0],
+    [8, 0, 4, 0, 6, 2, 0, 0, 3],
+    [0, 1, 3, 8, 0, 0, 2, 0, 0],
+    [0, 0, 0, 0, 2, 0, 3, 9, 0],
+    [5, 0, 7, 0, 0, 0, 6, 2, 1],
+    [0, 3, 2, 0, 0, 6, 0, 0, 0],
+    [0, 2, 0, 0, 0, 9, 1, 4, 0],
+    [6, 0, 1, 2, 5, 0, 8, 0, 9],
+    [0, 0, 0, 0, 0, 1, 0, 0, 2],
+]
+small_sudoku_grid = [
+    [2, 0, 0, 0],
+    [0, 1, 0, 2],
+    [0, 0, 3, 0],
+    [0, 0, 0, 4]
+]
+
+
+def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem,problem_path):
+    parameters = {
+        'Problem' : problem,
+        'Population Size': pop_size,
+        'Crossover': crossover_method,
+        'Mutation Rate': mutation_rate,
+        'Mutation Method': mutation_method,
+        'Selection Method': parent_selection_method,
+        'Max generations': max_generations
+
+    }
+    current_bf = 0
     population = []
-
+    game = input_sudoku_grid_easy1
+    optimal_fitness = 243
     for i in range(pop_size):
         if problem == "strings":
             individual = objects.StringIndividual(num_genes)
         if problem == "sudoku":
-            individual = objects.SudokuIndividual(input_sudoku_grid)
-            individual.init_random_sudoku_individual(input_sudoku_grid)
+            individual = objects.SudokuIndividual(game,len(game))
+            individual.init_random_sudoku_grid(game)
+
+
         if problem == "binpack":
-            path = path
+            path = problem_path
             ftv,item_sizes = bp.load_values_from_file(path)
 
             bin_capacity = ftv[0]
@@ -158,7 +306,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             max_generations=max_generations,
             mutation_rate=mutation_rate,
             crossover_method=crossover_method,
-            mutation_method=mutation_method,
+            mutation_method=bp.mutation_method,
             parent_selection_method=parent_selection_method,
             problem=problem1,
             opt=opt,
@@ -168,17 +316,19 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             print(sol.chromosome,sol.fitness)
             return 1
 
-
         population.append(individual)
 
 
     generation_avg_fitnesses = []
     generation_avg_SD = []
+    generation_avg_variance = []
+    generation_top_avg_selection_ratio = []
     cpu_times = []
     elapsed_times = []
     elite_size = int(pop_size * 0.1)
 
     generation_counter = -1
+
     for generation in range(max_generations):
         generation_counter += 1
         start_cpu = time.process_time()
@@ -186,10 +336,40 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
         fitnesses = [fitness_func(individual) for individual in population]
 
+
+
+        current_best_indiv_index = 0
+        current_best_fitness = 0
+        for i in range(0,len(fitnesses)):
+            if fitnesses[i] > current_best_fitness:
+                current_best_fitness = fitnesses[i]
+                current_bf = fitnesses[i]
+                current_best_indiv_index = i
+
+
+
+
+        best_indiv = population[current_best_indiv_index]
+        best_indiv_grid = best_indiv.grid
+        print("gen: ",generation_counter ,"fitness: ", current_best_fitness)
+        # for row in best_indiv_grid:
+        #     print(row)
+        if(current_best_fitness == optimal_fitness):
+            print("solution satisfied at generation: ", generation_counter)
+
+            xLabels = ['Generation','Generation','Generation','Generation','Generation','Generation']
+            yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
+            titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
+            dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
+            objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters)
+            return best_indiv,current_best_fitness
+
+
         Statistics_Manager = objects.statistics_manager(fitnesses)
         generation_avg_fitnesses.append(Statistics_Manager.avg_fittness_generation())
         generation_avg_SD.append(Statistics_Manager.Standard_deviation())
-
+        generation_avg_variance.append(Statistics_Manager.Standard_deviation() ** 2)
+        generation_top_avg_selection_ratio.append(top_average_selection_probability_ratio(fitnesses))
         # if  generation%20==0:
         #     Statistics_Manager.norm_and_plot()
 
@@ -213,6 +393,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 elites = [population[i] for i in elite_indices]
 
             if parent_selection_method == "tournament":
+
                 elite_indices = ps.undeterministic_tournament_selection(fitnesses, elite_size)
                 elites = [population[i] for i in elite_indices]
 
@@ -229,7 +410,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 last_n_keys = [key for key, value in sorted_by_values[-elite_size:]]
                 elites = [population[i] for i in last_n_keys]
 
-
+            if parent_selection_method == "elitism":
+                elites = parentSelection.elitism(population, pop_size, fitnesses, elite_size)
 
 
 
@@ -240,8 +422,6 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             indiv.age+=1
 
 
-        if problem == "binpack":
-            pass
 
 
         #CROSSOVER
@@ -257,34 +437,56 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 child = com.Two(elites,num_genes)
 
             elif problem == "sudoku" and crossover_method == "pmx":
+
                 parent1 = random.choice(elites)
                 parent2 = random.choice(elites)
-                child_grid =com.pmx_crossover_sudoku_grid_block(parent1,parent2,input_sudoku_grid) # returns 1 child grid
-                child = objects.SudokuIndividual(child_grid) # create a new born sudoku individual
+
+                child_grid =com.pmx_crossover_sudoku_grid_block(parent1,parent2,game) # returns 1 child grid
+                #child_grid = com.pmx_crossover_sudoku_grid(parent1, parent2,input_sudoku_grid)  # returns 1 child grid
+
+                child = objects.SudokuIndividual(child_grid,len(game)) # create a new born sudoku individual
 
             elif problem == "sudoku" and crossover_method == "cx":
+                # parent1 = random.choice(elites)
+                # parent2 = random.choice(elites)
+                # child_grid = com.cx_crossover_sudoku(parent1,parent2,game)
+                # child = objects.SudokuIndividual(child_grid, len(game))  # create a new born sudoku individual
                 pass
 
-
-
             # MUTATION
+
             ga_mutation = mutation_rate * sys.maxsize
-            if generation_counter > 0:
-               ga_mutation =  ga_mutation / (4*generation_counter)
 
             if random.random() < ga_mutation:
                 if problem == "strings":
                     mut.mutate(child)
                 if problem == "sudoku" and mutation_method == "inversion" :
 
-                    pass
-                if problem == "sudoku" and mutation_method == "scramble":
-                    child.grid = mut.scramble_mutation_sudoku_grid(child.grid,input_sudoku_grid)
+                    random_row_index = random.randint(0,8)
+                    original_row = game[random_row_index]
+                    current_row = child.grid[random_row_index]
+                    mutated_row = mut.inversion_mutation_sudoku_row(current_row,original_row,9)
+                    for i in range(0,len(current_row)):
+                        child.grid[random_row_index][i] = mutated_row[i]
 
-                if problem == "binpack" and mutation_method == "inversion":
-                    pass
-                if problem == "binpack" and mutation_method == "scramble":
-                    pass
+                if problem == "sudoku" and mutation_method == "scramble":
+
+                            random_number = random.random()
+                            if random_number > 0 and random_number < 0.33:
+                                child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game, len(game))
+                            if random_number >= 0.33  and random_number < 0.66:
+                                child.grid = mut.scramble_mutation_sudoku_grid(child.grid,game)
+                            if random_number >= 0.66 and random_number < 1:
+                                child_grid_transpoed = com.transpose_matrix(child.grid)
+                                input_sudoku_grid_transposed = com.transpose_matrix(game)
+                                result_transposed = mut.scramble_mutation_sudoku_grid(child_grid_transpoed,input_sudoku_grid_transposed)
+                                child.grid = com.transpose_matrix(result_transposed)
+
+
+
+                if problem == "sudoku" and mutation_method == "replacement":
+                    child.grid = mut.replacement_mutation(child.grid,game)
+
 
             #print("current child fitness:", fitness_func(child))
             offspring.append(child)
@@ -298,10 +500,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
 
 
-    objects.plot_distribution(generation_avg_fitnesses, 'Generation', 'AVG', 'Fittness AVG distribution')
-    objects.plot_distribution(generation_avg_SD, 'Generation', 'AVG', 'Standart Deviation')
-    objects.plot_distribution(cpu_times,"Generation","Cpu-time","Ticks")
-    objects.plot_distribution(elapsed_times, "Generation", "Elapsead-time", "Elapsed")
+    dataSets = [generation_avg_fitnesses,generation_avg_SD,generation_avg_variance,generation_top_avg_selection_ratio,cpu_times,elapsed_times]
 
     best_individual = max(population, key=lambda individual: fitness_func(individual))
     best_fitness = fitness_func(best_individual)
@@ -310,41 +509,37 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     return best_individual, best_fitness
 
 
-bestIndividual,bestFitness = genetic_algorithm(1000, 9, calc_fitness_sudoku, 80, 0.25, "pmx","scramble","tournament","sudoku")
-
-def is_valid_sudoku(grid):
-    def is_valid_block(block):
-        block = [num for num in block if num != 0]
-        return len(block) == len(set(block))
-
-    # Check rows
-    for row in grid:
-        if not is_valid_block(row):
-            return False
-
-    # Check columns
-    for col in zip(*grid):
-        if not is_valid_block(col):
-            return False
-
-    # Check 3x3 subgrids
-    for i in range(0, 9, 3):
-        for j in range(0, 9, 3):
-            block = [grid[x][y] for x in range(i, i + 3) for y in range(j, j + 3)]
-            if not is_valid_block(block):
-                return False
-
-    return True
 
 
-if isinstance(bestIndividual,objects.SudokuIndividual):
-    print("Best individual: ")
-    for row in bestIndividual.grid:
-        print(row)
+def main():
+    parser = argparse.ArgumentParser(description='Genetic Algorithm Parameters')
+    parser.add_argument('--pop_size', type=int, default=100, help='Population size')
+    parser.add_argument('--max_generations', type=int, default=100, help='Maximum number of generations')
+    parser.add_argument('--mutation_rate', type=float, default=0.25, help='Mutation rate')
+    parser.add_argument('--crossover_method', type=str, default="pmx", choices=["uniform", "single", "two","pmx","cx"], help='Crossover method')
+    parser.add_argument('--mutation_method', type=str, default="scramble",choices=["scramble","inversion"], help='Mutation Method')
+    parser.add_argument('--parent_selection', type=str, default="elitism", help='Parent Selection')
+    parser.add_argument('--problem', type=str, default="sudoku", help='Problem to test')
+    parser.add_argument('--problem_path', type=str, default="//", help='Path to the problem file')
+    args = parser.parse_args()
 
-print("Best fitness: ",bestFitness)
+    pop_size = args.pop_size
+    num_genes = 13
+    max_generations = args.max_generations
+    mutation_rate = args.mutation_rate
+    crossover_method = args.crossover_method
+    mutation_method = args.mutation_method
+    problem = args.problem
+    parent_selection = args.parent_selection
+    problem_path = args.problem_path
+    best_individual, best_fitness = genetic_algorithm(pop_size, num_genes, calc_fitness_sudoku, max_generations,
+                                                    mutation_rate, crossover_method, mutation_method,
+                                                    parent_selection, problem,problem_path)
 
-#print("solution is valid? :",is_valid_sudoku(bestIndividual.grid))
 
-# individual = objects.SudokuIndividual(input_sudoku_grid)
-# individual.init_random_sudoku_individual(input_sudoku_grid)
+
+if __name__ == "__main__":
+    main()
+
+
+

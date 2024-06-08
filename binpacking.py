@@ -180,6 +180,22 @@ def Single(parent1, parent2, problem):
     child2 = Individual(child2_chromosome)
     return child1, child2
 
+def Two(parent1,parent2,problem):
+    crossover_point1 = random.randint(1, len(parent1.chromosome) - 2)
+    crossover_point2 = random.randint(1, len(parent1.chromosome) - 2)
+    min1 = min(crossover_point1,crossover_point2)
+    max1 = max(crossover_point2,crossover_point1)
+
+    child1_chromosome = parent1.chromosome[:min1] + parent2.chromosome[min1:max1]+parent1[max1:]
+    child2_chromosome = parent2.chromosome[:min1] + parent1.chromosome[min1:max1]+parent2[max1:]
+
+    child1_chromosome = ensure_capacity(child1_chromosome, problem)
+    child2_chromosome = ensure_capacity(child2_chromosome, problem)
+
+    child1 = Individual(child1_chromosome)
+    child2 = Individual(child2_chromosome)
+    return child1, child2
+
 
 def pmx(parent1, parent2, problem):
     crossover_point1 = random.randint(1, len(parent1.chromosome) - 1)
@@ -422,7 +438,7 @@ ga = GeneticAlgorithm(
     num_genes=num_items,
     fitness_func=fitness_func,
     max_generations=150,
-    mutation_rate=0.99,
+    mutation_rate=0.5,
     crossover_method=cx,
     mutation_method=mutation_method,
     parent_selection_method=tournament,

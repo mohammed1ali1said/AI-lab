@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 
 import numpy as np
@@ -22,6 +23,9 @@ class statistics_manager:
             sum += (fitness - mean) ** 2
         ST = np.sqrt(sum / len(self.fitnesses))
         return ST
+
+
+
 
     def norm_and_plot(self):
         norm_min = 0
@@ -148,13 +152,52 @@ class SudokuIndividual:
 def close_event():
     plt.close()
 
-def plot_distribution(data, xlabel, ylabel, title):
-    # Create a histogram
-        plt.figure(figsize=(10, 6))
-        plt.plot(data, marker='none', linestyle='-', color='b')
 
-        # Adding labels and title
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.title(title)
-        plt.show()
+
+
+def plot_distribution(ax, data, xlabel, ylabel, title):
+    """Creates a plot on the given axis."""
+    ax.plot(data, marker='none', linestyle='-', color='b')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+
+def plot_parameters(ax, parameters):
+    """Creates a text plot for the given parameters on the given axis."""
+    param_text = "\n".join([f"{key}: {value}" for key, value in parameters.items()])
+    ax.text(0.5, 0.5, param_text, fontsize=12, ha='center', va='center', wrap=True)
+    ax.axis('off')
+    ax.set_title('Algorithm Parameters')
+
+def combine_plots(datasets, xlabels, ylabels, titles, parameters):
+    """Combines multiple plots into a single image, including parameters."""
+    # Number of plots (plus one for parameters)
+    n = len(datasets) + 1
+
+    # Determine the grid size
+    cols = 3
+    rows = math.ceil(n / cols)
+
+    # Create a figure to hold the subplots
+    fig, axs = plt.subplots(rows, cols, figsize=(18, rows * 4))
+
+    # Flatten the array of axes for easy iteration
+    axs = axs.flatten()
+
+    # Plot the parameters in the first subplot
+    plot_parameters(axs[0], parameters)
+
+    # Create each subplot for the datasets
+    for i in range(1, n):
+        plot_distribution(axs[i], datasets[i-1], xlabels[i-1], ylabels[i-1], titles[i-1])
+
+    # Hide any unused subplots
+    for j in range(n, len(axs)):
+        fig.delaxes(axs[j])
+
+    # Adjust layout to prevent overlap
+    plt.tight_layout()
+
+
+    # Display the combined plot
+    plt.show()
