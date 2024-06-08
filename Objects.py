@@ -156,6 +156,81 @@ def close_event():
 
 
 
+# def plot_distribution(ax, data, xlabel, ylabel, title):
+#     """Creates a plot on the given axis."""
+#     ax.plot(data, marker='none', linestyle='-', color='b')
+#     ax.set_xlabel(xlabel)
+#     ax.set_ylabel(ylabel)
+#     ax.set_title(title)
+#
+# def plot_parameters(ax, parameters):
+#     """Creates a text plot for the given parameters on the given axis."""
+#     param_text = "\n".join([f"{key}: {value}" for key, value in parameters.items()])
+#     ax.text(0.5, 0.5, param_text, fontsize=12, ha='center', va='center', wrap=True)
+#     ax.axis('off')
+#     ax.set_title('Algorithm Parameters')
+#
+#
+#
+#
+# def combine_plots(datasets, xlabels, ylabels, titles, parameters, sudoku_grid=None):
+#     """Combines multiple plots into a single image, including parameters and optionally a Sudoku grid."""
+#     # Number of plots (plus one for parameters)
+#     n = len(datasets) + 1
+#     if sudoku_grid is not None:
+#         n += 1
+#
+#     # Determine the grid size
+#     cols = 3
+#     rows = math.ceil(n / cols)
+#
+#     # Create a figure to hold the subplots
+#     fig, axs = plt.subplots(rows, cols, figsize=(18, rows * 4))
+#
+#     # Flatten the array of axes for easy iteration
+#     axs = axs.flatten()
+#
+#     # Plot the parameters in the first subplot
+#     plot_parameters(axs[0], parameters)
+#
+#     # Create each subplot for the datasets
+#     for i in range(1, len(datasets) + 1):
+#         plot_distribution(axs[i], datasets[i-1], xlabels[i-1], ylabels[i-1], titles[i-1])
+#
+#     # Plot the Sudoku grid if provided
+#     if sudoku_grid is not None:
+#         plot_sudoku(axs[len(datasets) + 1], sudoku_grid)
+#
+#
+#     # Hide any unused subplots
+#     for j in range(n, len(axs)):
+#         fig.delaxes(axs[j])
+#
+#     # Adjust layout to prevent overlap
+#     plt.tight_layout()
+#
+#     # Display the combined plot
+#     plt.show()
+#
+def plot_sudoku(ax, grid):
+    """Plots a Sudoku grid using matplotlib."""
+    ax.axis('off')
+    table = ax.table(cellText=grid, cellLoc='center', loc='center', colWidths=[0.1]*len(grid))
+    table.scale(1, 1.5)
+
+    # Style the table
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            cell = table[(i, j)]
+            cell.set_fontsize(14)
+            if grid[i][j] == 0:  # Highlight empty cells (optional)
+                cell.set_facecolor("#f3f3f3")
+            else:
+                cell.set_facecolor("#ffffff")
+            cell.set_edgecolor("black")
+    ax.set_title('Best Individual')
+
+
 def plot_distribution(ax, data, xlabel, ylabel, title):
     """Creates a plot on the given axis."""
     ax.plot(data, marker='none', linestyle='-', color='b')
@@ -170,13 +245,16 @@ def plot_parameters(ax, parameters):
     ax.axis('off')
     ax.set_title('Algorithm Parameters')
 
+def plot_results(ax, results):
+    """Creates a text plot for the algorithm results on the given axis."""
+    ax.text(0.5, 0.5, results, fontsize=12, ha='center', va='center', wrap=True)
+    ax.axis('off')
+    ax.set_title('Algorithm Results')
 
-
-
-def combine_plots(datasets, xlabels, ylabels, titles, parameters, sudoku_grid=None):
-    """Combines multiple plots into a single image, including parameters and optionally a Sudoku grid."""
-    # Number of plots (plus one for parameters)
-    n = len(datasets) + 1
+def combine_plots(datasets, xlabels, ylabels, titles, parameters, results, sudoku_grid=None):
+    """Combines multiple plots into a single image, including parameters, results, and optionally a Sudoku grid."""
+    # Number of plots (plus one for parameters and one for results)
+    n = len(datasets) + 2
     if sudoku_grid is not None:
         n += 1
 
@@ -201,6 +279,9 @@ def combine_plots(datasets, xlabels, ylabels, titles, parameters, sudoku_grid=No
     if sudoku_grid is not None:
         plot_sudoku(axs[len(datasets) + 1], sudoku_grid)
 
+    # Plot the results in the next subplot
+    plot_results(axs[len(datasets) + (1 if sudoku_grid is None else 2)], results)
+
     # Hide any unused subplots
     for j in range(n, len(axs)):
         fig.delaxes(axs[j])
@@ -210,21 +291,3 @@ def combine_plots(datasets, xlabels, ylabels, titles, parameters, sudoku_grid=No
 
     # Display the combined plot
     plt.show()
-
-def plot_sudoku(ax, grid):
-    """Plots a Sudoku grid using matplotlib."""
-    ax.axis('off')
-    table = ax.table(cellText=grid, cellLoc='center', loc='center', colWidths=[0.1]*len(grid))
-    table.scale(1, 1.5)
-
-    # Style the table
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
-            cell = table[(i, j)]
-            cell.set_fontsize(14)
-            if grid[i][j] == 0:  # Highlight empty cells (optional)
-                cell.set_facecolor("#f3f3f3")
-            else:
-                cell.set_facecolor("#ffffff")
-            cell.set_edgecolor("black")
-    ax.set_title('Best Individual')

@@ -314,11 +314,13 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             print("solution satisfied at generation: ", generation_counter)
             for row in best_indiv_grid:
                 print(row)
+
+            results = "Max Fitness: " + str(current_best_fitness) + "\n" + "Solution satisfied at generation: " + str(generation_counter)
             xLabels = ['Generation','Generation','Generation','Generation','Generation','Generation']
             yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
             titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
             dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-            objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters,best_indiv_grid)
+            objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters,results,best_indiv_grid)
             return best_indiv,current_best_fitness
 
 
@@ -437,12 +439,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                     mut.mutate(child)
                 if problem == "sudoku" and mutation_method == "inversion" :
 
-                    random_row_index = random.randint(0,8)
-                    original_row = game[random_row_index]
-                    current_row = child.grid[random_row_index]
-                    mutated_row = mut.inversion_mutation_sudoku_row(current_row,original_row,9)
-                    for i in range(0,len(current_row)):
-                        child.grid[random_row_index][i] = mutated_row[i]
+                    child.grid = mut.inversion_mutation_sudoku_grid(child.grid,game,len(game))
 
                 if problem == "sudoku" and mutation_method == "scramble":
 
@@ -489,11 +486,15 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     best_individual = max(population, key=lambda individual: fitness_func(individual))
     best_fitness = fitness_func(best_individual)
 
+    if current_best_fitness == 243:
+        results = "Max Fitness: " + str(current_best_fitness) + "\n" + "Solution satisfied at generation: " + str(generation_counter)
+    else:
+        results = "Max Fitness: " + str(current_best_fitness) + "\n" + "Reached local Optima"
     xLabels = ['Generation', 'Generation', 'Generation', 'Generation', 'Generation', 'Generation']
     yLabels = ['AVG', 'SD', 'VAR', 'TR', 'Cpu-time', 'Elapsead-time']
     titles = ['Fittness AVG distribution', 'Standard Deviation', 'Variance', 'Top Ratio', 'Ticks', 'Elapsed']
     dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-    objects.combine_plots(dataSets, xLabels, yLabels, titles, parameters,best_individual.grid)
+    objects.combine_plots(dataSets, xLabels, yLabels, titles, parameters, results,best_individual.grid)
 
     return best_individual, best_fitness
 
@@ -525,8 +526,8 @@ def main():
     problem = args.problem
     parent_selection = args.parent_selection
     problem_path = args.problem_path
-    best_individual, best_fitness = genetic_algorithm(2000, 9, calc_fitness_sudoku, 100,
-                                                    0, "pmx", "scramble",
+    best_individual, best_fitness = genetic_algorithm(2500, 9, calc_fitness_sudoku, 200,
+                                                    0, "cx", "scramble",
                                                     "elitism", "sudoku",problem_path = "//")
 
     # best_individual, best_fitness = genetic_algorithm(pop_size, num_genes, calc_fitness_sudoku, max_generations,
