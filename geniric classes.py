@@ -248,13 +248,14 @@ small_sudoku_grid = [
 
 def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem,problem_path):
     parameters = {
-        'Problem' : problem,
+        'Problem': problem,
         'Population Size': pop_size,
         'Crossover': crossover_method,
         'Mutation Rate': mutation_rate,
         'Mutation Method': mutation_method,
         'Selection Method': parent_selection_method,
         'Max generations': max_generations
+
 
     }
     current_bf = 0
@@ -308,22 +309,16 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         best_indiv = population[current_best_indiv_index]
         best_indiv_grid = best_indiv.grid
         print("gen: ",generation_counter ,"fitness: ", current_best_fitness)
-        # for row in best_indiv_grid:
-        #     print(row)
+
         if(current_best_fitness == optimal_fitness):
             print("solution satisfied at generation: ", generation_counter)
-            # THESE PLOTTINGS WILL BE PLOTTED IN CASE THE ALGORITHM REAHCED THE CORRECT SOLUTION IN LESS GENERATIONS THAT num_Genrataions
-            # objects.plot_distribution(generation_avg_fitnesses, 'Generation', 'AVG', 'Fittness AVG distribution')
-            # objects.plot_distribution(generation_avg_SD, 'Generation', 'SD', 'Standard Deviation')
-            # Objects.plot_distribution(generation_avg_variance, 'Generation', 'VAR', 'Variance')
-            # objects.plot_distribution(generation_top_avg_selection_ratio,'Generation','TR','Top Ratio')
-            # objects.plot_distribution(cpu_times, "Generation", "Cpu-time", "Ticks")
-            #objects.plot_distribution(elapsed_times, "Generation", "Elapsead-time", "Elapsed")
+            for row in best_indiv_grid:
+                print(row)
             xLabels = ['Generation','Generation','Generation','Generation','Generation','Generation']
             yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
             titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
             dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-            objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters)
+            objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters,best_indiv_grid)
             return best_indiv,current_best_fitness
 
 
@@ -422,11 +417,11 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 child = objects.SudokuIndividual(child_grid,len(game)) # create a new born sudoku individual
 
             elif problem == "sudoku" and crossover_method == "cx":
-                # parent1 = random.choice(elites)
-                # parent2 = random.choice(elites)
-                # child_grid = com.cx_crossover_sudoku(parent1,parent2,game)
-                # child = objects.SudokuIndividual(child_grid, len(game))  # create a new born sudoku individual
-                pass
+                parent1 = random.choice(elites)
+                parent2 = random.choice(elites)
+                child_grid = com.cx_crossover_sudoku(parent1,parent2,game)
+                child = objects.SudokuIndividual(child_grid, len(game))  # create a new born sudoku individual
+                #pass
 
             elif problem == "binpack" and crossover_method == "pmx":
                 pass
@@ -489,11 +484,16 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     # objects.plot_distribution(cpu_times, "Generation", "Cpu-time", "Ticks")
     # objects.plot_distribution(elapsed_times, "Generation", "Elapsead-time", "Elapsed")
 
-    dataSets = [generation_avg_fitnesses,generation_avg_SD,generation_avg_variance,generation_top_avg_selection_ratio,cpu_times,elapsed_times]
+
 
     best_individual = max(population, key=lambda individual: fitness_func(individual))
     best_fitness = fitness_func(best_individual)
 
+    xLabels = ['Generation', 'Generation', 'Generation', 'Generation', 'Generation', 'Generation']
+    yLabels = ['AVG', 'SD', 'VAR', 'TR', 'Cpu-time', 'Elapsead-time']
+    titles = ['Fittness AVG distribution', 'Standard Deviation', 'Variance', 'Top Ratio', 'Ticks', 'Elapsed']
+    dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
+    objects.combine_plots(dataSets, xLabels, yLabels, titles, parameters,best_individual.grid)
 
     return best_individual, best_fitness
 
@@ -525,7 +525,7 @@ def main():
     problem = args.problem
     parent_selection = args.parent_selection
     problem_path = args.problem_path
-    best_individual, best_fitness = genetic_algorithm(2000, 9, calc_fitness_sudoku, 300,
+    best_individual, best_fitness = genetic_algorithm(2000, 9, calc_fitness_sudoku, 100,
                                                     0, "pmx", "scramble",
                                                     "elitism", "sudoku",problem_path = "//")
 

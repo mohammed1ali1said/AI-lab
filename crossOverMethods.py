@@ -173,7 +173,7 @@ def find_cycles(parent1, parent2):
                     x = parent1.index(parent2[x])
                 else:
                     #raise ValueError(f"Element {parent2[x]} from parent2 is not in parent1")
-                    return 'no cycles'
+                    return "no cycles"
             cycles.append(cycle)
     return cycles
 
@@ -202,7 +202,7 @@ def cx_crossover(parent1, parent2):
     offspring2 = parent2[:]
 
     cycles = find_cycles(parent1, parent2)
-    if cycles == 'no cycles':
+    if cycles == "no cycles":
         return parent1
 
     for i, cycle in enumerate(cycles):
@@ -210,18 +210,23 @@ def cx_crossover(parent1, parent2):
             for index in cycle:
                 offspring1[index], offspring2[index] = offspring2[index], offspring1[index]
 
-    return offspring1, offspring2
+    return offspring1
 
 def cx_crossover_sudoku(parent1:objects.SudokuIndividual,parent2:objects.SudokuIndividual,original_grid):
     parent_grid1 = parent1.grid
     parent_grid2 = parent2.grid
     result_grid = []
-    for row1,row2 in zip(parent_grid1,parent_grid2):
+    for row1,row2,orig_row in zip(parent_grid1,parent_grid2,original_grid):
         new_row = cx_crossover(row1,row2)
-        for element1,element2 in zip(new_row,original_grid): # if the original input row was changed dont take this child.
+        valid_row = True
+        for element1,element2 in zip(new_row,orig_row): # if the original input row was changed dont take this child.
             if element2 != 0 and element1 != element2:
-                result_grid.append(row1)
-            else:
-                result_grid.append(new_row)
+                valid_row = False
+                break
+
+        if valid_row:
+            result_grid.append(new_row)
+        else:
+            result_grid.append(row1)
 
     return result_grid
