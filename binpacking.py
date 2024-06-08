@@ -186,8 +186,8 @@ def Two(parent1,parent2,problem):
     min1 = min(crossover_point1,crossover_point2)
     max1 = max(crossover_point2,crossover_point1)
 
-    child1_chromosome = parent1.chromosome[:min1] + parent2.chromosome[min1:max1]+parent1[max1:]
-    child2_chromosome = parent2.chromosome[:min1] + parent1.chromosome[min1:max1]+parent2[max1:]
+    child1_chromosome = parent1.chromosome[:min1] + parent2.chromosome[min1:max1]+ parent1.chromosome[max1:]
+    child2_chromosome = parent2.chromosome[:min1] + parent1.chromosome[min1:max1]+ parent2.chromosome[max1:]
 
     child1_chromosome = ensure_capacity(child1_chromosome, problem)
     child2_chromosome = ensure_capacity(child2_chromosome, problem)
@@ -432,21 +432,21 @@ def diversity_index(population):
 
 
 
-# Using best fit heuristic
-ga = GeneticAlgorithm(
-    pop_size=150,
-    num_genes=num_items,
-    fitness_func=fitness_func,
-    max_generations=150,
-    mutation_rate=0.5,
-    crossover_method=cx,
-    mutation_method=mutation_method,
-    parent_selection_method=tournament,
-    problem=problem,
-    opt=opt,
-    heuristic=GeneticAlgorithm.best_fit_heuristic  # Pass the heuristic here
-)
+# # Using best fit heuristic
+# ga = GeneticAlgorithm(
+#     pop_size=150,
+#     num_genes=num_items,
+#     fitness_func=fitness_func,
+#     max_generations=150,
+#     mutation_rate=0.5,
+#     crossover_method=Two,
+#     mutation_method=mutation_method,
+#     parent_selection_method=tournament,
+#     problem=problem,
+#     opt=opt,
+#     heuristic=GeneticAlgorithm.best_fit_heuristic  # Pass the heuristic here
+# )
 
-solution_best_fit = ga.evolve()
-print(solution_best_fit.chromosome,solution_best_fit.fitness)
-print_total_size_used(solution_best_fit.chromosome,item_sizes)
+# solution_best_fit = ga.evolve()
+# print(solution_best_fit.chromosome,solution_best_fit.fitness)
+# print_total_size_used(solution_best_fit.chromosome,item_sizes)

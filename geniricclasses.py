@@ -1,3 +1,5 @@
+import importlib
+
 import numpy as np
 import argparse
 import random
@@ -284,8 +286,11 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     optimal_fitness = 243
     for i in range(pop_size):
         if problem == "strings":
+            fitness_func = evaluation
             individual = objects.StringIndividual(num_genes)
+
         if problem == "sudoku":
+            fitness_func = calc_fitness_sudoku
             individual = objects.SudokuIndividual(game,len(game))
             individual.init_random_sudoku_grid(game)
 
@@ -298,6 +303,25 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             num_items = ftv[1]
             opt = ftv[2]
             problem1 = bp.BinPackingProblem(item_sizes, bin_capacity, num_items)
+            if fitness_func=="adaptive":
+                fitness_func = bp.adaptive_fitness_func
+            else:
+                fitness_func = bp.fitness_func
+
+            if parent_selection_method == "rws":
+                parent_selection_method = bp.rws
+            elif parent_selection_method == "sus":
+                 parent_selection_method =bp.sus
+            else:
+                parent_selection_method=bp.tournament
+            if crossover_method =="Single":
+               crossover_method = bp.Single
+            elif crossover_method =="Two":
+                crossover_method = bp.Two
+            elif crossover_method =="pmx":
+                crossover_method =bp.pmx
+            elif crossover_method == "cx":
+                crossover_method = bp.cx
 
             ga = bp.GeneticAlgorithm(
             pop_size=pop_size,
@@ -518,9 +542,9 @@ def main():
     parser.add_argument('--mutation_rate', type=float, default=0.25, help='Mutation rate')
     parser.add_argument('--crossover_method', type=str, default="pmx", choices=["uniform", "single", "two","pmx","cx"], help='Crossover method')
     parser.add_argument('--mutation_method', type=str, default="scramble",choices=["scramble","inversion"], help='Mutation Method')
-    parser.add_argument('--parent_selection', type=str, default="elitism", help='Parent Selection')
-    parser.add_argument('--problem', type=str, default="sudoku", help='Problem to test')
-    parser.add_argument('--problem_path', type=str, default="//", help='Path to the problem file')
+    parser.add_argument('--parent_selection', type=str, default="tournament", help='Parent Selection')
+    parser.add_argument('--problem', type=str, default="binpack", help='Problem to test')
+    parser.add_argument('--problem_path', type=str, default="try1.txt", help='Path to the problem file')
     args = parser.parse_args()
 
     pop_size = args.pop_size
@@ -532,9 +556,11 @@ def main():
     problem = args.problem
     parent_selection = args.parent_selection
     problem_path = args.problem_path
-    best_individual, best_fitness = genetic_algorithm(pop_size, num_genes, calc_fitness_sudoku, max_generations,
-                                                    mutation_rate, crossover_method, mutation_method,
-                                                    parent_selection, problem,problem_path)
+
+    genetic_algorithm(pop_size=pop_size, num_genes=num_genes,max_generations= max_generations,
+                      mutation_rate=mutation_rate,crossover_method= crossover_method,mutation_method= mutation_method,
+                      parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,fitness_func=None)
+    return -1
 
 
 
