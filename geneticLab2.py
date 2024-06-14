@@ -280,7 +280,8 @@ small_sudoku_grid = [
 ]
 
 
-def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem,problem_path,grid):
+def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,mutation_control,parent_selection_method
+                      ,problem,problem_path,grid,show_results = "false"):
     parameters = {
         'Problem' : problem,
         'Population Size': pop_size,
@@ -411,11 +412,12 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             print("solution satisfied at generation: ", generation_counter)
             for row in best_indiv_grid:
                 print(row)
-            xLabels = ['Generation','Generation','Generation','Generation','Generation','Generation']
-            yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
-            titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
-            #dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-            #objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters)
+            if show_results == "true":
+                xLabels = ['Generation','Generation','Generation','Generation','Generation','Generation']
+                yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
+                titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
+                dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
+                objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters)
             return best_indiv,current_best_fitness
 
 
@@ -508,6 +510,21 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 pass
 
             # MUTATION
+            if(mutation_control == "non_uniform"): # decreases the mutation rate linearly with generations
+
+                if generation_counter >= 1:
+                    mutation_rate = mutation_rate / (generation_counter)
+
+            elif mutation_control == "adaptive": # decreases the mutation rate as the avg fitness increases
+                gen_avg_fitness = Statistics_Manager.avg_fittness_generation()
+                mutation_rate = (optimal_fitness - gen_avg_fitness) / optimal_fitness
+
+
+            elif mutation_control == "THM":
+                pass
+
+            elif mutation_control == "self_adaptive":
+                pass
 
             ga_mutation = mutation_rate * sys.maxsize
 
@@ -554,7 +571,13 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
 
 
-    dataSets = [generation_avg_fitnesses,generation_avg_SD,generation_avg_variance,generation_top_avg_selection_ratio,cpu_times,elapsed_times]
+    if show_results == "true":
+
+        xLabels = ['Generation', 'Generation', 'Generation', 'Generation', 'Generation', 'Generation']
+        yLabels = ['AVG', 'SD', 'VAR', 'TR', 'Cpu-time', 'Elapsead-time']
+        titles = ['Fittness AVG distribution', 'Standard Deviation', 'Variance', 'Top Ratio', 'Ticks', 'Elapsed']
+        dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
+        objects.combine_plots(dataSets, xLabels, yLabels, titles, parameters)
 
     best_individual = max(population, key=lambda individual: fitness_func(individual))
     best_fitness = fitness_func(best_individual)
@@ -574,6 +597,8 @@ def main():
     parser.add_argument('--mutation_rate', type=float, default=0.9, help='Mutation rate')
     parser.add_argument('--crossover_method', type=str, default="pmx", choices=["uniform", "single", "two","pmx","cx"], help='Crossover method')
     parser.add_argument('--mutation_method', type=str, default="scramble",choices=["scramble","inversion"], help='Mutation Method')
+    parser.add_argument('--mutation_control', type=str, default="basic",
+                        choices=["basic", "non_uniform","adaptive","THM","self_adaptive"],help='Mutation Control')
     parser.add_argument('--parent_selection', type=str, default="elitism", help='Parent Selection')
     parser.add_argument('--problem', type=str, default="sudoku", help='Problem to test')
     parser.add_argument('--problem_path', type=str, default="try1.txt", help='Path to the problem file')
@@ -587,6 +612,7 @@ def main():
     mutation_rate = args.mutation_rate
     crossover_method = args.crossover_method
     mutation_method = args.mutation_method
+    mutation_control = args.mutation_control
     problem = args.problem
     parent_selection = args.parent_selection
     problem_path = args.problem_path
@@ -595,7 +621,8 @@ def main():
 
     genetic_algorithm(pop_size=pop_size, num_genes=num_genes,max_generations= max_generations,
                       mutation_rate=mutation_rate,crossover_method= crossover_method,mutation_method= mutation_method,
-                      parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,fitness_func=fitness_func,grid=grid)
+                      mutation_control = "non_uniform",parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,
+                      fitness_func=fitness_func,grid=grid,show_results = "false")
     return -1
 
 
