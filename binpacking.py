@@ -394,13 +394,13 @@ def ensure_capacity(chromosome, problem):
                             break
     return chromosome
 
-ftv,item_sizes = load_values_from_file('try1.txt')
+# ftv,item_sizes = load_values_from_file('try1.txt')
+#
+# bin_capacity = ftv[0]
+# num_items = ftv[1]
+# opt = ftv[2]
 
-bin_capacity = ftv[0]
-num_items = ftv[1]
-opt = ftv[2]
-
-problem = BinPackingProblem(item_sizes, bin_capacity, num_items)
+# problem = BinPackingProblem(item_sizes, bin_capacity, num_items)
 
 def print_total_size_used(chromosome, item_sizes):
     bins = [0] * (max(chromosome) + 1)

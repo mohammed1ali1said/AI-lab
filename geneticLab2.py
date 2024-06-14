@@ -261,6 +261,17 @@ input_sudoku_grid_hard2 = [
     [6, 0, 1, 2, 5, 0, 8, 0, 9],
     [0, 0, 0, 0, 0, 1, 0, 0, 2],
 ]
+input_sudoku_grid_impossible = [
+    [0, 2, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 6, 0, 0, 0, 0, 3],
+    [0, 7, 4, 0, 8, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 3, 0, 0, 2],
+    [0, 8, 0, 0, 4, 0, 0, 1, 0],
+    [6, 0, 0, 5, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 0, 7, 8, 0],
+    [5, 0, 0, 0, 0, 9, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 4, 0],
+]
 small_sudoku_grid = [
     [2, 0, 0, 0],
     [0, 1, 0, 2],
@@ -269,7 +280,7 @@ small_sudoku_grid = [
 ]
 
 
-def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem,problem_path):
+def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,parent_selection_method,problem,problem_path,grid):
     parameters = {
         'Problem' : problem,
         'Population Size': pop_size,
@@ -290,6 +301,18 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             individual = objects.StringIndividual(num_genes)
 
         if problem == "sudoku":
+            if grid=="hard2":
+                game = input_sudoku_grid_hard2
+            elif grid =="intermediate1":
+                game = input_sudoku_grid_intermediate1
+            elif grid=="hard1":
+                game = input_sudoku_grid_hard1
+            elif grid=="easy2":
+                game = input_sudoku_grid_easy2
+            elif grid=="impossible":     # thanos
+                game = input_sudoku_grid_impossible
+
+
             fitness_func = calc_fitness_sudoku
             individual = objects.SudokuIndividual(game,len(game))
             individual.init_random_sudoku_grid(game)
@@ -297,7 +320,13 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
         if problem == "binpack":
             path = problem_path
-            ftv,item_sizes = bp.load_values_from_file(path)
+            try:
+                ftv,item_sizes = bp.load_values_from_file(path)
+
+            except:
+                print("no path")
+                pass
+
 
             bin_capacity = ftv[0]
             num_items = ftv[1]
@@ -380,12 +409,13 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         #     print(row)
         if(current_best_fitness == optimal_fitness):
             print("solution satisfied at generation: ", generation_counter)
-
+            for row in best_indiv_grid:
+                print(row)
             xLabels = ['Generation','Generation','Generation','Generation','Generation','Generation']
             yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
             titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
-            dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-            objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters)
+            #dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
+            #objects.combine_plots(dataSets,xLabels,yLabels,titles,parameters)
             return best_indiv,current_best_fitness
 
 
@@ -529,7 +559,9 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
     best_individual = max(population, key=lambda individual: fitness_func(individual))
     best_fitness = fitness_func(best_individual)
 
-
+    print("best fitness: ", best_fitness)
+    for row in best_individual.grid:
+        print(row)
     return best_individual, best_fitness
 
 
@@ -539,12 +571,14 @@ def main():
     parser = argparse.ArgumentParser(description='Genetic Algorithm Parameters')
     parser.add_argument('--pop_size', type=int, default=100, help='Population size')
     parser.add_argument('--max_generations', type=int, default=100, help='Maximum number of generations')
-    parser.add_argument('--mutation_rate', type=float, default=0.25, help='Mutation rate')
+    parser.add_argument('--mutation_rate', type=float, default=0.9, help='Mutation rate')
     parser.add_argument('--crossover_method', type=str, default="pmx", choices=["uniform", "single", "two","pmx","cx"], help='Crossover method')
     parser.add_argument('--mutation_method', type=str, default="scramble",choices=["scramble","inversion"], help='Mutation Method')
-    parser.add_argument('--parent_selection', type=str, default="tournament", help='Parent Selection')
-    parser.add_argument('--problem', type=str, default="binpack", help='Problem to test')
+    parser.add_argument('--parent_selection', type=str, default="elitism", help='Parent Selection')
+    parser.add_argument('--problem', type=str, default="sudoku", help='Problem to test')
     parser.add_argument('--problem_path', type=str, default="try1.txt", help='Path to the problem file')
+    parser.add_argument('--sudoku_grid',type=str,default='easy1',help='sudoku grid')
+    parser.add_argument('--fitness_func',type=str,default="static")
     args = parser.parse_args()
 
     pop_size = args.pop_size
@@ -556,10 +590,12 @@ def main():
     problem = args.problem
     parent_selection = args.parent_selection
     problem_path = args.problem_path
+    grid = args.sudoku_grid
+    fitness_func= args.fitness_func
 
     genetic_algorithm(pop_size=pop_size, num_genes=num_genes,max_generations= max_generations,
                       mutation_rate=mutation_rate,crossover_method= crossover_method,mutation_method= mutation_method,
-                      parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,fitness_func=None)
+                      parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,fitness_func=fitness_func,grid=grid)
     return -1
 
 
