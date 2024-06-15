@@ -211,3 +211,16 @@ def replacement_mutation(grid,original_grid): # takes a grid, and applies replac
     return grid
 
 
+
+def apply_thm_test(thm_best_fit_tracker,thm_thresh):
+    count = 0
+    for i in range(len(thm_best_fit_tracker) - 1):
+        if thm_best_fit_tracker[i] < thm_best_fit_tracker[i + 1]:
+            count += 1
+
+    if count/len(thm_best_fit_tracker) < thm_thresh :
+        print("the THM test passed, we will increase mutation rate now")
+        return "true"
+    else:
+        print("the THM test failed, it seems that the enhancement progress is healthy!")
+        return "false"

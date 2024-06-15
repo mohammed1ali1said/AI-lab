@@ -57,10 +57,11 @@ class StringIndividual:
 
 class SudokuIndividual:
 
-    def __init__(self,grid,size):
+    def __init__(self,grid,size,born_fitness):
         self.size = size
         self.grid = grid
         self.age = 0
+        self.fitness = born_fitness
         pass
 
     def init_random_sudoku_individual_byRows(self, input_grid):

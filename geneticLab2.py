@@ -280,6 +280,7 @@ small_sudoku_grid = [
 ]
 
 
+# GENETIC ALGORITHM DEF
 def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,mutation_control,parent_selection_method
                       ,problem,problem_path,grid,show_results = "false"):
     parameters = {
@@ -292,10 +293,15 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         'Max generations': max_generations
 
     }
+    original_mutation_rate = mutation_rate
     current_bf = 0
     population = []
     game = input_sudoku_grid_easy1
-    optimal_fitness = 243
+    if problem == "sudoku":
+        optimal_fitness = 243
+    if problem == "binpack":
+        pass
+
     for i in range(pop_size):
         if problem == "strings":
             fitness_func = evaluation
@@ -315,7 +321,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
 
             fitness_func = calc_fitness_sudoku
-            individual = objects.SudokuIndividual(game,len(game))
+            born_fitness = calc_fitness_sudoku_general(game)
+            individual = objects.SudokuIndividual(game,len(game),born_fitness)
             individual.init_random_sudoku_grid(game)
 
 
@@ -383,13 +390,20 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
     generation_counter = -1
 
+    # PARAMETERS FOR HYPER MUTAION
+    hyper_mutation_state = "waiting"  # this variable is used in the hyper mutation section if it was chosen
+    thm_best_fit_tracker = []  # this list is made to track the best fitnesses of the last x generations.
+    thm_generations = 20  # track the last 20 generations
+    thm_generation_counter = 0  # start from 0 and end at 20 if the hyper mutation needed.
+    thm_thresh = 0.5
+
+    # GENERATION LOOP STARTING
     for generation in range(max_generations):
         generation_counter += 1
         start_cpu = time.process_time()
         start_elapsed = time.time()
 
         fitnesses = [fitness_func(individual) for individual in population]
-
 
 
         current_best_indiv_index = 0
@@ -479,7 +493,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
 
 
-
+        current_generation = generation_counter
         #CROSSOVER
         offspring = []
         while len(offspring) < pop_size - elite_size:
@@ -500,7 +514,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 child_grid =com.pmx_crossover_sudoku_grid_block(parent1,parent2,game) # returns 1 child grid
                 #child_grid = com.pmx_crossover_sudoku_grid(parent1, parent2,input_sudoku_grid)  # returns 1 child grid
 
-                child = objects.SudokuIndividual(child_grid,len(game)) # create a new born sudoku individual
+                born_fitness = calc_fitness_sudoku_general(child_grid)
+                child = objects.SudokuIndividual(child_grid,len(game),born_fitness) # create a new born sudoku individual
 
             elif problem == "sudoku" and crossover_method == "cx":
                 # parent1 = random.choice(elites)
@@ -509,26 +524,73 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 # child = objects.SudokuIndividual(child_grid, len(game))  # create a new born sudoku individual
                 pass
 
-            # MUTATION
+            # MUTATION CONTROL
             if(mutation_control == "non_uniform"): # decreases the mutation rate linearly with generations
 
                 if generation_counter >= 1:
                     mutation_rate = mutation_rate / (generation_counter)
 
-            elif mutation_control == "adaptive": # decreases the mutation rate as the avg fitness increases
+            if mutation_control == "adaptive": # decreases the mutation rate as the avg fitness increases
                 gen_avg_fitness = Statistics_Manager.avg_fittness_generation()
                 mutation_rate = (optimal_fitness - gen_avg_fitness) / optimal_fitness
 
 
-            elif mutation_control == "THM":
-                pass
 
-            elif mutation_control == "self_adaptive":
+            if mutation_control == "THM":
+
+                if (hyper_mutation_state == "waiting") and (len(thm_best_fit_tracker) < thm_generations): # the first 20 generations
+                    if current_generation == generation_counter:
+                        print("waiting , currently in the first 20 gens")
+                        current_generation = -1
+                        thm_best_fit_tracker.append(current_best_fitness)
+
+
+                if (hyper_mutation_state == "waiting") and (len(thm_best_fit_tracker) == thm_generations): # after the list is full, keep tracking the last 20 generations
+                    hyper_mutation_needed = "false"
+                    if current_generation == generation_counter:
+                        hyper_mutation_needed = mut.apply_thm_test(thm_best_fit_tracker,thm_thresh)
+                    if hyper_mutation_needed == "true":
+                        if current_generation == generation_counter:
+                            print("now in the in_progress phase, changing mutation rate to 1 !")
+                            current_generation = -1
+                            mutation_rate = 1
+                            hyper_mutation_state = "in_progress"
+                    else:
+                        if current_generation == generation_counter:
+                            print("waiting , more than 20 generations passed")
+                            current_generation = -1
+                            thm_best_fit_tracker.pop(0)
+                            thm_best_fit_tracker.append(current_best_fitness)
+
+
+                if hyper_mutation_state == "in_progress":
+                    if thm_generation_counter == thm_generations:
+                        if current_generation == generation_counter:
+                            print("hyper mutation period has ended,going back to waiting state, and mutation rate going back to normal")
+                            current_generation = -1
+                            hyper_mutation_state = "waiting"
+                            thm_generation_counter = 0
+                            mutation_rate = original_mutation_rate
+
+                    if current_generation == generation_counter:
+                        print("hyper mutation in progress")
+                        current_generation = -1
+                        thm_best_fit_tracker.pop(0)
+                        thm_best_fit_tracker.append(current_best_fitness)
+                        thm_generation_counter += 1
+
+
+
+
+            if mutation_control == "self_adaptive":
                 pass
 
             ga_mutation = mutation_rate * sys.maxsize
 
+            # MUTATION
             if random.random() < ga_mutation:
+
+
                 if problem == "strings":
                     mut.mutate(child)
                 if problem == "sudoku" and mutation_method == "inversion" :
@@ -542,16 +604,18 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
                 if problem == "sudoku" and mutation_method == "scramble":
 
-                            random_number = random.random()
-                            if random_number > 0 and random_number < 0.33:
-                                child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game, len(game))
-                            if random_number >= 0.33  and random_number < 0.66:
-                                child.grid = mut.scramble_mutation_sudoku_grid(child.grid,game)
-                            if random_number >= 0.66 and random_number < 1:
-                                child_grid_transpoed = com.transpose_matrix(child.grid)
-                                input_sudoku_grid_transposed = com.transpose_matrix(game)
-                                result_transposed = mut.scramble_mutation_sudoku_grid(child_grid_transpoed,input_sudoku_grid_transposed)
-                                child.grid = com.transpose_matrix(result_transposed)
+                            child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game, len(game))
+                            indiv_ctr = 0
+                            # random_number = random.random()
+                            # if random_number > 0 and random_number < 0.33:
+                            #     child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game, len(game))
+                            # if random_number >= 0.33  and random_number < 0.66:
+                            #     child.grid = mut.scramble_mutation_sudoku_grid(child.grid,game)
+                            # if random_number >= 0.66 and random_number < 1:
+                            #     child_grid_transpoed = com.transpose_matrix(child.grid)
+                            #     input_sudoku_grid_transposed = com.transpose_matrix(game)
+                            #     result_transposed = mut.scramble_mutation_sudoku_grid(child_grid_transpoed,input_sudoku_grid_transposed)
+                            #     child.grid = com.transpose_matrix(result_transposed)
 
 
 
@@ -594,7 +658,7 @@ def main():
     parser = argparse.ArgumentParser(description='Genetic Algorithm Parameters')
     parser.add_argument('--pop_size', type=int, default=100, help='Population size')
     parser.add_argument('--max_generations', type=int, default=100, help='Maximum number of generations')
-    parser.add_argument('--mutation_rate', type=float, default=0.9, help='Mutation rate')
+    parser.add_argument('--mutation_rate', type=float, default=0, help='Mutation rate')
     parser.add_argument('--crossover_method', type=str, default="pmx", choices=["uniform", "single", "two","pmx","cx"], help='Crossover method')
     parser.add_argument('--mutation_method', type=str, default="scramble",choices=["scramble","inversion"], help='Mutation Method')
     parser.add_argument('--mutation_control', type=str, default="basic",
@@ -619,10 +683,11 @@ def main():
     grid = args.sudoku_grid
     fitness_func= args.fitness_func
 
-    genetic_algorithm(pop_size=pop_size, num_genes=num_genes,max_generations= max_generations,
-                      mutation_rate=mutation_rate,crossover_method= crossover_method,mutation_method= mutation_method,
-                      mutation_control = "non_uniform",parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,
-                      fitness_func=fitness_func,grid=grid,show_results = "false")
+    # GENETIC ALGORITHM CALL
+    genetic_algorithm(pop_size=2000, num_genes=num_genes,max_generations= 500,
+                      mutation_rate=0,crossover_method= "pmx",mutation_method= "scramble",
+                      mutation_control = "THM",parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,
+                      fitness_func=fitness_func,grid="intermediate1",show_results = "true")
     return -1
 
 
