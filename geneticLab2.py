@@ -8,7 +8,7 @@ import time
 import math
 import matplotlib.pyplot as plt
 import binpacking as bp
-
+import Partition as partition
 import Objects
 import crossOverMethods as com
 import Mutations as mut
@@ -281,7 +281,7 @@ small_sudoku_grid = [
 
 
 # GENETIC ALGORITHM DEF
-def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,mutation_control,parent_selection_method
+def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method,mutation_method,mutation_control,partition_method,parent_selection_method
                       ,problem,problem_path,grid,show_results = "false"):
     parameters = {
         'Problem' : problem,
@@ -325,7 +325,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             individual = objects.SudokuIndividual(game,len(game),born_fitness)
             individual.init_random_sudoku_grid(game)
 
-
+        # BINPACK PROBLEM
         if problem == "binpack":
             path = problem_path
             try:
@@ -368,6 +368,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
             mutation_rate=mutation_rate,
             crossover_method=crossover_method,
             mutation_method=bp.mutation_method,
+            mutation_control=mutation_control,
+            partition_method =partition_method,
             parent_selection_method=parent_selection_method,
             problem=problem1,
             opt=opt,
@@ -404,6 +406,23 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         start_elapsed = time.time()
 
         fitnesses = [fitness_func(individual) for individual in population]
+        if partition_method == ("sharing") and problem == "sudoku": # adjust the fitnesses from the beggining based on fitness sharing method
+            SIGMA = 5
+            #print("original fitnesses :", fitnesses)
+            population_grids = []
+            for indiv in population:
+                population_grids.append(indiv.grid)
+
+            adjusted_fitnesses = partition.adjust_fitness_with_sharing(population_grids,fitnesses,SIGMA)
+            fitnesses = adjusted_fitnesses.copy()
+            for indiv,adjusted_fitness in zip(population,adjusted_fitnesses):
+                indiv.fitness = adjusted_fitness
+            #print("adjusted fitnesses :", fitnesses)
+
+
+
+
+
 
 
         current_best_indiv_index = 0
@@ -508,8 +527,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
             elif problem == "sudoku" and crossover_method == "pmx":
 
-                parent1 = random.choice(elites)
-                parent2 = random.choice(elites)
+                parent1_index,parent1 = random.choice(list(enumerate(elites)))
+                parent2_index,parent2 = random.choice(list(enumerate(elites)))
 
                 child_grid =com.pmx_crossover_sudoku_grid_block(parent1,parent2,game) # returns 1 child grid
                 #child_grid = com.pmx_crossover_sudoku_grid(parent1, parent2,input_sudoku_grid)  # returns 1 child grid
@@ -518,8 +537,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 child = objects.SudokuIndividual(child_grid,len(game),born_fitness) # create a new born sudoku individual
 
             elif problem == "sudoku" and crossover_method == "cx":
-                # parent1 = random.choice(elites)
-                # parent2 = random.choice(elites)
+                # parent1_index, parent1 = random.choice(list(enumerate(elites)))
+                # parent2_index, parent2 = random.choice(list(enumerate(elites)))
                 # child_grid = com.cx_crossover_sudoku(parent1,parent2,game)
                 # child = objects.SudokuIndividual(child_grid, len(game))  # create a new born sudoku individual
                 pass
@@ -551,9 +570,10 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                         hyper_mutation_needed = mut.apply_thm_test(thm_best_fit_tracker,thm_thresh)
                     if hyper_mutation_needed == "true":
                         if current_generation == generation_counter:
-                            print("now in the in_progress phase, changing mutation rate to 1 !")
+                            print("now in the in_progress phase, changing mutation rate  !")
                             current_generation = -1
-                            mutation_rate = 1
+                            mutation_rate = 0.9
+
                             hyper_mutation_state = "in_progress"
                     else:
                         if current_generation == generation_counter:
@@ -581,14 +601,10 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
 
 
-
-            if mutation_control == "self_adaptive":
-                pass
-
             ga_mutation = mutation_rate * sys.maxsize
 
             # MUTATION
-            if random.random() < ga_mutation:
+            if (random.random() < ga_mutation) and mutation_control != "self_adaptive":
 
 
                 if problem == "strings":
@@ -623,9 +639,45 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                     child.grid = mut.replacement_mutation(child.grid,game)
 
 
-            #print("current child fitness:", fitness_func(child))
+            # PARTITION
+            if partition_method == "crowding":
+
+                # 1. calculate the probability of replacing child with parent
+                child_fitness = child.fitness
+                parent1_fitness = parent1.fitness
+                boltzman_prob = partition.calculate_boltzmann_probability(parent1_fitness,child_fitness,5)
+                random_number = random.random()
+
+                if random_number <= boltzman_prob: # replacing will happen
+                    elites[parent1_index] = child
+                # 2. using the parents indexes, replace the child based on the probability
+                # 3. add the child to the offspring list
             offspring.append(child)
         population = elites + offspring
+
+        # IN THIS MUTATION CONTROL METHOD, WE DISABLE THE NORMAL MUTATION FOR CHILDREN, AND WE DO THE MUTATION INDIVIDUALLY INSIDE THIS BLOCk
+        if mutation_control == "self_adaptive":
+
+            print("chose self adaptive mutation control, treating each individual now..")
+            gen_avg_fitness = Statistics_Manager.avg_fittness_generation()
+            alpha = 0.5  # multiply mutation rate by 0.5 for strong individuals
+            beta = 2  # mutation rate by 2 for weak individuals
+            # 1. iterate over the population
+            for indiv in population:
+                # 2. for each individual calculate the relative fitness
+                indiv.relative_fitness = (indiv.fitness) / (gen_avg_fitness)
+
+                if indiv.relative_fitness <= 1:  # weak individual
+                    mutation_rate = mutation_rate * beta
+                    ga_mutation = mutation_rate * sys.maxsize
+
+                if indiv.relative_fitness > 1:  # strong individual
+                    mutation_rate = mutation_rate * alpha
+                    ga_mutation = mutation_rate * sys.maxsize
+                    if (random.random() < ga_mutation):
+                        if problem == "sudoku" and mutation_method == "scramble":
+                            child.grid = mut.scramble_mutation_sudoku_grid_block(child.grid, game, len(game))
+
 
         end_cpu = time.process_time()
         end_elapsed = time.time()
@@ -664,6 +716,7 @@ def main():
     parser.add_argument('--mutation_control', type=str, default="basic",
                         choices=["basic", "non_uniform","adaptive","THM","self_adaptive"],help='Mutation Control')
     parser.add_argument('--parent_selection', type=str, default="elitism", help='Parent Selection')
+    parser.add_argument('--partition_method',  type=str, default="crowding",choices=["none","crowding","sharing","speciation"], help='Partition Method')
     parser.add_argument('--problem', type=str, default="sudoku", help='Problem to test')
     parser.add_argument('--problem_path', type=str, default="try1.txt", help='Path to the problem file')
     parser.add_argument('--sudoku_grid',type=str,default='easy1',help='sudoku grid')
@@ -677,6 +730,7 @@ def main():
     crossover_method = args.crossover_method
     mutation_method = args.mutation_method
     mutation_control = args.mutation_control
+    partition_method = args.partition_method
     problem = args.problem
     parent_selection = args.parent_selection
     problem_path = args.problem_path
@@ -684,10 +738,10 @@ def main():
     fitness_func= args.fitness_func
 
     # GENETIC ALGORITHM CALL
-    genetic_algorithm(pop_size=2000, num_genes=num_genes,max_generations= 500,
-                      mutation_rate=0,crossover_method= "pmx",mutation_method= "scramble",
-                      mutation_control = "THM",parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,
-                      fitness_func=fitness_func,grid="intermediate1",show_results = "true")
+    genetic_algorithm(pop_size=500, num_genes=num_genes,max_generations= 100,
+                      mutation_rate=0.5,crossover_method= "pmx",mutation_method= "scramble",
+                      mutation_control = "self_adaptive",partition_method = "sharing",parent_selection_method="tournament",problem_path= problem_path,problem="binpack",
+                      fitness_func=fitness_func,grid="hard2",show_results = "true")
     return -1
 
 

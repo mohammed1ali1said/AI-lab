@@ -62,6 +62,7 @@ class SudokuIndividual:
         self.grid = grid
         self.age = 0
         self.fitness = born_fitness
+        self.relative_fitness = 1
         pass
 
     def init_random_sudoku_individual_byRows(self, input_grid):

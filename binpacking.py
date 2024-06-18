@@ -1,7 +1,9 @@
 import random
 import parentSelection  as ps
 import crossOverMethods as com
-
+import Objects as objs
+import Mutations as mut
+import sys
 class BinPackingProblem:
     def __init__(self, item_sizes, bin_capacity, num_items):
         self.item_sizes = item_sizes
@@ -21,7 +23,7 @@ class Individual:
 
 # Genetic algorithm for bin packing
 class GeneticAlgorithm:
-    def __init__(self, pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method, mutation_method, parent_selection_method, problem, opt,heuristic=None,):
+    def __init__(self, pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method, mutation_method,mutation_control,partition_method, parent_selection_method, problem, opt,heuristic=None,):
         self.pop_size = pop_size
         self.num_genes = num_genes
         self.fitness_func = fitness_func
@@ -29,6 +31,8 @@ class GeneticAlgorithm:
         self.mutation_rate = mutation_rate
         self.crossover_method = crossover_method
         self.mutation_method = mutation_method
+        self.mutation_control = mutation_control
+        self.partition_method = partition_method
         self.parent_selection_method = parent_selection_method
         self.problem = problem
         self.heuristic = heuristic
@@ -107,24 +111,129 @@ class GeneticAlgorithm:
     def mutate(self, individual):
         return self.mutation_method(individual, self.mutation_rate, self.problem.item_sizes, self.problem.bin_capacity)
 
+    # EVOLVE IN BINPACKING
     def evolve(self):
         self.initialize_population()
 
+        generation_counter = -1
+        first_gen_avg_fitness = 0
+        avg_gen_fitness = 0
+        # PARAMETERS FOR HYPER MUTAION
+        hyper_mutation_state = "waiting"  # this variable is used in the hyper mutation section if it was chosen
+        thm_best_fit_tracker = []  # this list is made to track the best fitnesses of the last x generations.
+        thm_generations = 20  # track the last 20 generations
+        thm_generation_counter = 0  # start from 0 and end at 20 if the hyper mutation needed.
+        thm_thresh = 0.5
+
+        original_mutation_rate = 0
         for generation in range(self.max_generations):
+            generation_counter += 1
+
+            avg_gen_fitness = 0
+            fitness_sum = 0
+            current_best_fitness = 10000
+            for indiv in self.population:
+                fitness_sum += indiv.fitness
+                if indiv.fitness < current_best_fitness:
+                    current_best_fitness = indiv.fitness
+            avg_gen_fitness = fitness_sum/len(self.population)
+            if generation_counter == 0:
+                first_gen_avg_fitness = avg_gen_fitness
+                original_mutation_rate = self.mutation_rate
             for i in self.population:
                 i.age += 1
             new_population = []
+            current_generation = generation_counter
             for _ in range(self.pop_size // 2):
                 parent1, parent2 = self.select_parents()
                 child1, child2 = self.crossover(parent1, parent2, self.problem)
-                self.mutate(child1)
-                self.mutate(child2)
+                # MUTATION CONTROL
+                if (self.mutation_control == "non_uniform"):  # decreases the mutation rate linearly with generations
+
+                    if generation_counter >= 1:
+                        self.mutation_rate = self.mutation_rate / (generation_counter)
+
+                if self.mutation_control == "adaptive":  # decreases the mutation rate as the avg fitness decreases (gets better)
+
+                    self.mutation_rate = avg_gen_fitness / first_gen_avg_fitness
+
+                if self.mutation_control == "THM":
+
+                    if (hyper_mutation_state == "waiting") and (len(thm_best_fit_tracker) < thm_generations):  # the first 20 generations
+                        if current_generation == generation_counter:
+                            print("waiting , currently in the first 20 gens")
+                            current_generation = -1
+                            thm_best_fit_tracker.append(current_best_fitness)
+
+                    if (hyper_mutation_state == "waiting") and (
+                            len(thm_best_fit_tracker) == thm_generations):  # after the list is full, keep tracking the last 20 generations
+                        hyper_mutation_needed = "false"
+                        if current_generation == generation_counter:
+                            hyper_mutation_needed = mut.apply_thm_test_binpack(thm_best_fit_tracker, thm_thresh)
+                        if hyper_mutation_needed == "true":
+                            if current_generation == generation_counter:
+                                print("now in the in_progress phase, changing mutation rate  !")
+                                current_generation = -1
+                                mutation_rate = 0.9
+
+                                hyper_mutation_state = "in_progress"
+                        else:
+                            if current_generation == generation_counter:
+                                print("waiting , more than 20 generations passed")
+                                current_generation = -1
+                                thm_best_fit_tracker.pop(0)
+                                thm_best_fit_tracker.append(current_best_fitness)
+
+                    if hyper_mutation_state == "in_progress":
+                        if thm_generation_counter == thm_generations:
+                            if current_generation == generation_counter:
+                                print(
+                                    "hyper mutation period has ended,going back to waiting state, and mutation rate going back to normal")
+                                current_generation = -1
+                                hyper_mutation_state = "waiting"
+                                thm_generation_counter = 0
+                                self.mutation_rate = original_mutation_rate
+
+                        if current_generation == generation_counter:
+                            print("hyper mutation in progress")
+                            current_generation = -1
+                            thm_best_fit_tracker.pop(0)
+                            thm_best_fit_tracker.append(current_best_fitness)
+                            thm_generation_counter += 1
+
+
+                if self.mutation_control != "self_adaptive":
+                    self.mutate(child1)
+                    self.mutate(child2)
                 child1.evaluate_fitness(self.fitness_func, self.problem,self.opt)
                 child2.evaluate_fitness(self.fitness_func, self.problem,self.opt)
                 new_population.extend([child1, child2])
             self.population = sorted(new_population, key=lambda x: x.fitness)[:self.pop_size]
             print(diversity_index(self.population))
             print("")
+
+            # IN THIS MUTATION CONTROL METHOD, WE DISABLE THE NORMAL MUTATION FOR CHILDREN, AND WE DO THE MUTATION INDIVIDUALLY INSIDE THIS BLOCk
+            if self.mutation_control == "self_adaptive":
+                print("chose self adaptive mutation control, treating each individual now..")
+
+                alpha = 0.5  # multiply mutation rate by 0.5 for strong individuals
+                beta = 2  # mutation rate by 2 for weak individuals
+                # 1. iterate over the population
+                for indiv in self.population:
+                    # 2. for each individual calculate the relative fitness
+                    indiv.relative_fitness = (indiv.fitness) / (avg_gen_fitness)
+
+                    if indiv.relative_fitness <= 1:  # weak individual
+                        mutation_rate = self.mutation_rate * beta
+                        ga_mutation = mutation_rate * sys.maxsize
+
+                    if indiv.relative_fitness > 1:  # strong individual
+                        mutation_rate = self.mutation_rate * alpha
+                        ga_mutation = mutation_rate * sys.maxsize
+                        if (random.random() < ga_mutation):
+                            if  self.mutation_method == "scramble":
+                                self.mutate(child1)
+                                child1.evaluate_fitness(self.fitness_func, self.problem, self.opt)
 
         best_individual = min(self.population, key=lambda x: x.fitness)
 
@@ -438,7 +547,7 @@ def diversity_index(population):
 #     num_genes=num_items,
 #     fitness_func=fitness_func,
 #     max_generations=150,
-#     mutation_rate=0.5,
+#     mutation_rate="0.5",
 #     crossover_method=Two,
 #     mutation_method=mutation_method,
 #     parent_selection_method=tournament,
@@ -446,7 +555,7 @@ def diversity_index(population):
 #     opt=opt,
 #     heuristic=GeneticAlgorithm.best_fit_heuristic  # Pass the heuristic here
 # )
-
+#
 # solution_best_fit = ga.evolve()
 # print(solution_best_fit.chromosome,solution_best_fit.fitness)
 # print_total_size_used(solution_best_fit.chromosome,item_sizes)
