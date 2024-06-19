@@ -4,6 +4,7 @@ import crossOverMethods as com
 import Objects as objs
 import Mutations as mut
 import sys
+import Partition as partition
 class BinPackingProblem:
     def __init__(self, item_sizes, bin_capacity, num_items):
         self.item_sizes = item_sizes
@@ -128,6 +129,17 @@ class GeneticAlgorithm:
         original_mutation_rate = 0
         for generation in range(self.max_generations):
             generation_counter += 1
+            if self.partition_method == ("sharing") :  # adjust the fitnesses from the beggining based on fitness sharing method
+                SIGMA = 5
+                # print("original fitnesses :", fitnesses)
+                population_fitnesses = []
+                for indiv in self.population:
+                    population_fitnesses.append(indiv.fitness)
+
+                adjusted_fitnesses = partition.adjust_fitness_with_sharing_binpack(population_fitnesses, SIGMA)
+                fitnesses = adjusted_fitnesses.copy()
+                for indiv, adjusted_fitness in zip(self.population, adjusted_fitnesses):
+                    indiv.fitness = adjusted_fitness
 
             avg_gen_fitness = 0
             fitness_sum = 0
@@ -144,8 +156,21 @@ class GeneticAlgorithm:
                 i.age += 1
             new_population = []
             current_generation = generation_counter
+            # PARENT SELECTION BINPACK
+            parent1_index = 0
+            parent2_index = 0
             for _ in range(self.pop_size // 2):
-                parent1, parent2 = self.select_parents()
+
+                #print("Parent selection method:", self.parent_selection_method.__name__)
+                if self.parent_selection_method.__name__ == "tournament" :
+
+                    paren1_index,parent2_index = self.select_parents()
+                    parent1 = self.population[parent1_index]
+                    parent2 = self.population[parent2_index]
+                elif self.parent_selection_method.__name__ != "tournament":
+
+                    parent1, parent2 = self.select_parents()
+
                 child1, child2 = self.crossover(parent1, parent2, self.problem)
                 # MUTATION CONTROL
                 if (self.mutation_control == "non_uniform"):  # decreases the mutation rate linearly with generations
@@ -207,6 +232,18 @@ class GeneticAlgorithm:
                     self.mutate(child2)
                 child1.evaluate_fitness(self.fitness_func, self.problem,self.opt)
                 child2.evaluate_fitness(self.fitness_func, self.problem,self.opt)
+
+                if self.partition_method == "crowding":
+
+                    # 1. calculate the probability of replacing child with parent
+                    child1_fitness = child1.fitness
+                    parent1_fitness = parent1.fitness
+                    boltzman_prob = partition.calculate_boltzmann_probability(parent1_fitness, child1_fitness, 5)
+                    random_number = random.random()
+
+                    if random_number <= boltzman_prob:  # replacing will happen
+                        self.population[parent1_index] = child1
+
                 new_population.extend([child1, child2])
             self.population = sorted(new_population, key=lambda x: x.fitness)[:self.pop_size]
             print(diversity_index(self.population))
@@ -437,13 +474,42 @@ def load_values_from_file(file_path):
 
     return first_three_values, remaining_values
 
-# parent selection methods
+#parent selection methods
+# def tournament(population):
+#
+#     parent1 = min(random.sample(population, k=36), key=lambda x: x.fitness)
+#     parent2 = min(random.sample(population, k=36), key=lambda x: x.fitness)
+#     return parent1, parent2
+
+
 def tournament(population):
-    parent1 = min(random.sample(population, k=36), key=lambda x: x.fitness)
-    parent2 = min(random.sample(population, k=36), key=lambda x: x.fitness)
-    return parent1, parent2
+
+    # Sample 36 individuals from the population
+    sample1 = random.sample(list(enumerate(population)), k=36)
+    sample2 = random.sample(list(enumerate(population)), k=36)
+
+    # Find the individual with the minimum fitness in each sample
+    parent1_index, parent1 = min(sample1, key=lambda x: x[1].fitness)
+    parent2_index, parent2 = min(sample2, key=lambda x: x[1].fitness)
+
+    # Return the parents and their indexes
+    return parent1_index,parent2_index
 
 
+
+
+# def tournament_new(population):
+#     print("choosing tournament_new")
+#     # Sample 36 individuals from the population
+#     sample1 = random.sample(list(enumerate(population)), k=36)
+#     sample2 = random.sample(list(enumerate(population)), k=36)
+#
+#     # Find the individual with the minimum fitness in each sample
+#     parent1_index, parent1 = min(sample1, key=lambda x: x[1].fitness)
+#     parent2_index, parent2 = min(sample2, key=lambda x: x[1].fitness)
+#
+#     # Return the parents and their indexes
+#     return (parent1_index, parent1), (parent2_index, parent2)
 def rws(population):
     fitness = []
     parentsindex = []

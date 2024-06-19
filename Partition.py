@@ -42,28 +42,17 @@ def calculate_distance_sudoku(grid1,grid2): # takes 2 sudoku grids and calculate
     return distance
 
 
+def calculate_distance_binpack(indiv1_fitness,indiv2_fitness):
+    return abs(indiv1_fitness - indiv2_fitness)
 
-def partition_to_niches_sudoku(population: list[objs.SudokuIndividual], sigma):
 
-    niches: list[objs.SudokuIndividual] = []
+def adjust_fitness_with_sharing_binpack(fitnesses, sigma):
 
-    for indiv in population:
-        placed = False
-        for niche in niches:
-            # Check if the grid fits into any existing niche
-            if any(calculate_distance_sudoku(indiv.grid, niche_member.grid) <= sigma for niche_member in niche):
-                niche.append(indiv)
-                placed = True
-                break
-        if not placed:
-            # Create a new niche if the grid does not fit into any existing niche
-            niches.append([indiv])
-
-    return niches
-
-def calculate_distance_binpack():
-    pass
-
+    adjusted_fitness = []
+    for i in range(len(fitnesses)):
+        niche_sum = sum(sharing_function(calculate_distance_binpack(fitnesses[i], fitnesses[j]), sigma) for j in range(len(fitnesses)))
+        adjusted_fitness.append(fitnesses[i] / niche_sum if niche_sum > 0 else fitnesses[i])
+    return adjusted_fitness
 
 
 # SPECIATION

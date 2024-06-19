@@ -650,8 +650,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
                 if random_number <= boltzman_prob: # replacing will happen
                     elites[parent1_index] = child
-                # 2. using the parents indexes, replace the child based on the probability
-                # 3. add the child to the offspring list
+
             offspring.append(child)
         population = elites + offspring
 
@@ -740,7 +739,7 @@ def main():
     # GENETIC ALGORITHM CALL
     genetic_algorithm(pop_size=500, num_genes=num_genes,max_generations= 100,
                       mutation_rate=0.5,crossover_method= "pmx",mutation_method= "scramble",
-                      mutation_control = "self_adaptive",partition_method = "sharing",parent_selection_method="tournament",problem_path= problem_path,problem="binpack",
+                      mutation_control = "self_adaptive",partition_method = "crowding",parent_selection_method="tournament",problem_path= problem_path,problem="binpack",
                       fitness_func=fitness_func,grid="hard2",show_results = "true")
     return -1
 
