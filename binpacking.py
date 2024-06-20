@@ -5,6 +5,29 @@ import Objects as objs
 import Mutations as mut
 import sys
 import Partition as partition
+import time
+
+
+def top_average_selection_probability_ratio(fitness_values):
+    """Calculates the Top-Average Selection Probability Ratio."""
+    # Step 1: Calculate total fitness
+    total_fitness = sum(fitness_values)
+
+    # Step 2: Determine top fitness
+    top_fitness = max(fitness_values)
+
+    # Step 3: Compute average fitness
+    average_fitness = total_fitness / len(fitness_values)
+
+    # Step 4: Compute selection probabilities
+    selection_prob_top = top_fitness / total_fitness
+    selection_prob_avg = average_fitness / total_fitness
+
+    # Step 5: Calculate the ratio
+    ratio = selection_prob_top / selection_prob_avg
+
+    return ratio
+
 class BinPackingProblem:
     def __init__(self, item_sizes, bin_capacity, num_items):
         self.item_sizes = item_sizes
@@ -24,7 +47,7 @@ class Individual:
 
 # Genetic algorithm for bin packing
 class GeneticAlgorithm:
-    def __init__(self, pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method, mutation_method,mutation_control,partition_method, parent_selection_method, problem, opt,heuristic=None,):
+    def __init__(self, pop_size, num_genes, fitness_func, max_generations, mutation_rate, crossover_method, mutation_method,mutation_control,partition_method, parent_selection_method, problem, opt,heuristic=None,show_results = "true",save_result_counter = 0):
         self.pop_size = pop_size
         self.num_genes = num_genes
         self.fitness_func = fitness_func
@@ -39,7 +62,8 @@ class GeneticAlgorithm:
         self.heuristic = heuristic
         self.population = []
         self.opt=opt
-
+        self.show_results = show_results
+        self.save_result_counter = save_result_counter
     def initialize_population(self):
         for _ in range(self.pop_size):
             chromosome = [random.randint(0, 119) for _ in range(self.num_genes)]
@@ -114,6 +138,20 @@ class GeneticAlgorithm:
 
     # EVOLVE IN BINPACKING
     def evolve(self):
+
+        parameters = {
+            'Problem': "Binpacking",
+            'Population Size': self.pop_size,
+            'Crossover': (self.crossover_method).__name__,
+            'Mutation Rate': self.mutation_rate,
+            'Mutation Method': (self.mutation_method).__name__,
+            'Mutation Control': self.mutation_control,
+            'Partition Method': self.partition_method,
+            'Selection Method': (self.parent_selection_method).__name__,
+            'Max generations': self.max_generations
+
+        }
+
         self.initialize_population()
 
         generation_counter = -1
@@ -127,19 +165,37 @@ class GeneticAlgorithm:
         thm_thresh = 0.5
 
         original_mutation_rate = 0
+
+        generation_avg_fitnesses = []
+        generation_avg_SD = []
+        generation_avg_variance = []
+        generation_top_avg_selection_ratio = []
+        cpu_times = []
+        elapsed_times = []
+
         for generation in range(self.max_generations):
+            start_cpu = time.process_time()
+            start_elapsed = time.time()
+            population_fitnesses = []
+            for indiv in self.population:
+                population_fitnesses.append(indiv.fitness)
+
             generation_counter += 1
+            print("Gen: ", generation_counter)
             if self.partition_method == ("sharing") :  # adjust the fitnesses from the beggining based on fitness sharing method
                 SIGMA = 5
                 # print("original fitnesses :", fitnesses)
-                population_fitnesses = []
-                for indiv in self.population:
-                    population_fitnesses.append(indiv.fitness)
-
                 adjusted_fitnesses = partition.adjust_fitness_with_sharing_binpack(population_fitnesses, SIGMA)
                 fitnesses = adjusted_fitnesses.copy()
                 for indiv, adjusted_fitness in zip(self.population, adjusted_fitnesses):
                     indiv.fitness = adjusted_fitness
+
+            Statistics_Manager = objs.statistics_manager(population_fitnesses)
+            generation_avg_fitnesses.append(Statistics_Manager.avg_fittness_generation())
+            generation_avg_SD.append(Statistics_Manager.Standard_deviation())
+            generation_avg_variance.append(Statistics_Manager.Standard_deviation() ** 2)
+            generation_top_avg_selection_ratio.append(top_average_selection_probability_ratio(population_fitnesses))
+
 
             avg_gen_fitness = 0
             fitness_sum = 0
@@ -272,6 +328,19 @@ class GeneticAlgorithm:
                                 self.mutate(child1)
                                 child1.evaluate_fitness(self.fitness_func, self.problem, self.opt)
 
+            end_cpu = time.process_time()
+            end_elapsed = time.time()
+
+            cpu_times.append(end_cpu - start_cpu)
+            elapsed_times.append(end_elapsed - start_elapsed)
+        if self.show_results == "true":
+            xLabels = ['Generation', 'Generation', 'Generation', 'Generation', 'Generation', 'Generation']
+            yLabels = ['AVG', 'SD', 'VAR', 'TR', 'Cpu-time', 'Elapsead-time']
+            titles = ['Fittness AVG distribution', 'Standard Deviation', 'Variance', 'Top Ratio', 'Ticks', 'Elapsed']
+            dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,
+                        generation_top_avg_selection_ratio, cpu_times, elapsed_times]
+            objs.combine_plots(dataSets, xLabels, yLabels, titles, parameters, 'save',
+                                  r'C:\Users\Administrator\Desktop\Ai-lab2\Report\binpack_result', self.save_result_counter)
         best_individual = min(self.population, key=lambda x: x.fitness)
 
         return best_individual
@@ -282,7 +351,7 @@ def fitness_func(chromosome, problem,opt):
     for i, bin_index in enumerate(chromosome):
         bin_sizes[bin_index] += problem.item_sizes[i]
         if bin_sizes[bin_index]>150:
-            fitness+=100000
+            fitness+=100
 
     num_bins_used = len([size for size in bin_sizes if size > 0])
 

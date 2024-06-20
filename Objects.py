@@ -49,6 +49,26 @@ class statistics_manager:
         plt.show()
         return normalized_fitnesses
 
+    def top_average_selection_probability_ratio(fitness_values):
+        """Calculates the Top-Average Selection Probability Ratio."""
+        # Step 1: Calculate total fitness
+        total_fitness = sum(fitness_values)
+
+        # Step 2: Determine top fitness
+        top_fitness = max(fitness_values)
+
+        # Step 3: Compute average fitness
+        average_fitness = total_fitness / len(fitness_values)
+
+        # Step 4: Compute selection probabilities
+        selection_prob_top = top_fitness / total_fitness
+        selection_prob_avg = average_fitness / total_fitness
+
+        # Step 5: Calculate the ratio
+        ratio = selection_prob_top / selection_prob_avg
+
+        return ratio
+
 class StringIndividual:
       def __init__(self,num_genes):
           self.str = [chr(random.randint(32, 126)) for j in range(num_genes)]
@@ -171,8 +191,43 @@ def plot_parameters(ax, parameters):
     ax.axis('off')
     ax.set_title('Algorithm Parameters')
 
-def combine_plots(datasets, xlabels, ylabels, titles, parameters):
-    """Combines multiple plots into a single image, including parameters."""
+# def combine_plots(datasets, xlabels, ylabels, titles, parameters):
+#     """Combines multiple plots into a single image, including parameters."""
+#     # Number of plots (plus one for parameters)
+#     n = len(datasets) + 1
+#
+#     # Determine the grid size
+#     cols = 3
+#     rows = math.ceil(n / cols)
+#
+#     # Create a figure to hold the subplots
+#     fig, axs = plt.subplots(rows, cols, figsize=(18, rows * 4))
+#
+#     # Flatten the array of axes for easy iteration
+#     axs = axs.flatten()
+#
+#     # Plot the parameters in the first subplot
+#     plot_parameters(axs[0], parameters)
+#
+#     # Create each subplot for the datasets
+#     for i in range(1, n):
+#         plot_distribution(axs[i], datasets[i-1], xlabels[i-1], ylabels[i-1], titles[i-1])
+#
+#     # Hide any unused subplots
+#     for j in range(n, len(axs)):
+#         fig.delaxes(axs[j])
+#
+#     # Adjust layout to prevent overlap
+#     plt.tight_layout()
+#
+#
+#     # Display the combined plot
+#     plt.show()
+
+
+
+def combine_plots(datasets, xlabels, ylabels, titles, parameters, action='save', filename=r'C:\Users\Administrator\Desktop\Ai-lab2\Report\binpack_result',result_counter = 0):
+
     # Number of plots (plus one for parameters)
     n = len(datasets) + 1
 
@@ -200,6 +255,14 @@ def combine_plots(datasets, xlabels, ylabels, titles, parameters):
     # Adjust layout to prevent overlap
     plt.tight_layout()
 
-
-    # Display the combined plot
-    plt.show()
+    # Display or save the combined plot based on the action parameter
+    if action == 'show':
+        plt.show()
+    elif action == 'save':
+        counter_str = str(result_counter)
+        print("filename: " , filename)
+        print("counter str: ", counter_str)
+        filename = filename + counter_str + ".png"
+        plt.savefig(filename)
+    else:
+        raise ValueError("Action must be either 'show' or 'save'")

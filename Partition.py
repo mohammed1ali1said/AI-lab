@@ -7,7 +7,8 @@ import Objects as objs
 def calculate_boltzmann_probability(fitness1, fitness2, T):
     # Calculate the fitness difference
     delta_fitness = fitness1 - fitness2
-
+    print("fitness1: ", fitness1)
+    print("fitness2: ",fitness2)
     # Calculate the Boltzmann replacement probability
     probability = math.exp(-delta_fitness / T) / (1 + math.exp(-delta_fitness / T))
 
