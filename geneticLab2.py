@@ -453,7 +453,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
                 yLabels = ['AVG','SD','VAR','TR','Cpu-time','Elapsead-time']
                 titles = ['Fittness AVG distribution','Standard Deviation','Variance','Top Ratio','Ticks','Elapsed']
                 dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-                objects.combine_plots(dataSets, xLabels, yLabels, titles, parameters,'save',r'C:\Users\Administrator\Desktop\Ai-lab2\Report\sudoku_result',save_result_counter)
+                objects.combine_plots(dataSets, xLabels, yLabels, titles, parameters,'none',r'C:\Users\Administrator\Desktop\Ai-lab2\Report\sudoku_result',save_result_counter)
             return best_indiv,current_best_fitness
 
 
@@ -695,7 +695,7 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         yLabels = ['AVG', 'SD', 'VAR', 'TR', 'Cpu-time', 'Elapsead-time']
         titles = ['Fittness AVG distribution', 'Standard Deviation', 'Variance', 'Top Ratio', 'Ticks', 'Elapsed']
         dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-        objects.combine_plots(dataSets, xLabels, yLabels, titles, parameters,'save',r'C:\Users\Administrator\Desktop\Ai-lab2\Report\sudoku_result',save_result_counter)
+        objects.combine_plots(dataSets, xLabels, yLabels, titles, parameters,'none',r'C:\Users\Administrator\Desktop\Ai-lab2\Report\sudoku_result',save_result_counter)
 
     best_individual = max(population, key=lambda individual: fitness_func(individual))
     best_fitness = fitness_func(best_individual)
@@ -742,9 +742,9 @@ def main():
 
 
     # GENETIC ALGORITHM CALL
-    genetic_algorithm(pop_size=1500, num_genes=num_genes,max_generations= 100,
+    genetic_algorithm(pop_size=1500, num_genes=num_genes,max_generations= 3,
                       mutation_rate=0.15,crossover_method= "pmx",mutation_method= "scramble",
-                      mutation_control = "basic",partition_method = "none",parent_selection_method="elitism",problem_path= problem_path,problem="sudoku",
+                      mutation_control = "basic",partition_method = "none",parent_selection_method="elitism",problem_path= problem_path,problem="binpack",
                       fitness_func=fitness_func,grid="easy1",show_results = "true",save_result_counter=0)
     return -1
 

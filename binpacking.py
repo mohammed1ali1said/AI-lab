@@ -339,7 +339,7 @@ class GeneticAlgorithm:
             titles = ['Fittness AVG distribution', 'Standard Deviation', 'Variance', 'Top Ratio', 'Ticks', 'Elapsed']
             dataSets = [generation_avg_fitnesses, generation_avg_SD, generation_avg_variance,
                         generation_top_avg_selection_ratio, cpu_times, elapsed_times]
-            objs.combine_plots(dataSets, xLabels, yLabels, titles, parameters, 'save',
+            objs.combine_plots(dataSets, xLabels, yLabels, titles, parameters, 'none',
                                   r'C:\Users\Administrator\Desktop\Ai-lab2\Report\binpack_result', self.save_result_counter)
         best_individual = min(self.population, key=lambda x: x.fitness)
 

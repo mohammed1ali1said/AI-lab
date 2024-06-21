@@ -226,7 +226,7 @@ def plot_parameters(ax, parameters):
 
 
 
-def combine_plots(datasets, xlabels, ylabels, titles, parameters, action='save', filename=r'C:\Users\Administrator\Desktop\Ai-lab2\Report\binpack_result',result_counter = 0):
+def combine_plots(datasets, xlabels, ylabels, titles, parameters, action='show', filename=r'C:\Users\Administrator\Desktop\Ai-lab2\Report\binpack_result',result_counter = 0):
 
     # Number of plots (plus one for parameters)
     n = len(datasets) + 1
@@ -264,5 +264,7 @@ def combine_plots(datasets, xlabels, ylabels, titles, parameters, action='save',
         print("counter str: ", counter_str)
         filename = filename + counter_str + ".png"
         plt.savefig(filename)
+    elif action == 'none':
+        print("finished the run !")
     else:
         raise ValueError("Action must be either 'show' or 'save'")
