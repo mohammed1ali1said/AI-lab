@@ -462,8 +462,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
         generation_avg_SD.append(Statistics_Manager.Standard_deviation())
         generation_avg_variance.append(Statistics_Manager.Standard_deviation() ** 2)
         generation_top_avg_selection_ratio.append(top_average_selection_probability_ratio(fitnesses))
-        # if  generation%20==0:
-        #     Statistics_Manager.norm_and_plot()
+
+
 
 
         # PARENT SELECTION METHODS
@@ -504,9 +504,6 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
             if parent_selection_method == "elitism":
                 elites = parentSelection.elitism(population, pop_size, fitnesses, elite_size)
-
-
-
 
 
         # increasing age of elites by one since the rest are either children so age zero or dead (Rest of the population)
@@ -653,6 +650,8 @@ def genetic_algorithm(pop_size, num_genes, fitness_func, max_generations, mutati
 
                 if random_number <= boltzman_prob: # replacing will happen
                     elites[parent1_index] = child
+            if partition_method =="kmeans":
+               centroids = partition.K_means(fitnesses,5,True)
 
             offspring.append(child)
         population = elites + offspring
@@ -718,9 +717,9 @@ def main():
     parser.add_argument('--mutation_control', type=str, default="basic",
                         choices=["basic", "non_uniform","adaptive","THM","self_adaptive"],help='Mutation Control')
     parser.add_argument('--parent_selection', type=str, default="elitism", help='Parent Selection')
-    parser.add_argument('--partition_method',  type=str, default="crowding",choices=["none","crowding","sharing","speciation"], help='Partition Method')
+    parser.add_argument('--partition_method',  type=str, default="crowding",choices=["none","crowding","sharing","speciation","kmeans"], help='Partition Method')
     parser.add_argument('--problem', type=str, default="sudoku", help='Problem to test')
-    parser.add_argument('--problem_path', type=str, default="try1.txt", help='Path to the problem file')
+    parser.add_argument('--problem_path', type=str, default="try1", help='Path to the problem file')
     parser.add_argument('--sudoku_grid',type=str,default='easy1',help='sudoku grid')
     parser.add_argument('--fitness_func',type=str,default="static")
     args = parser.parse_args()
@@ -742,10 +741,10 @@ def main():
 
 
     # GENETIC ALGORITHM CALL
-    genetic_algorithm(pop_size=1500, num_genes=num_genes,max_generations= 3,
-                      mutation_rate=0.15,crossover_method= "pmx",mutation_method= "scramble",
-                      mutation_control = "basic",partition_method = "none",parent_selection_method="elitism",problem_path= problem_path,problem="binpack",
-                      fitness_func=fitness_func,grid="easy1",show_results = "true",save_result_counter=0)
+    genetic_algorithm(pop_size=pop_size, num_genes=num_genes,max_generations= max_generations,
+                      mutation_rate=mutation_rate,crossover_method= crossover_method,mutation_method= mutation_method,
+                      mutation_control = mutation_control,partition_method =partition_method,parent_selection_method=parent_selection,problem_path= problem_path,problem=problem,
+                      fitness_func=fitness_func,grid=grid,show_results = "true",save_result_counter=0)
     return -1
 
 

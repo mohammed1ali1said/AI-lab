@@ -180,6 +180,9 @@ class GeneticAlgorithm:
             for indiv in self.population:
                 population_fitnesses.append(indiv.fitness)
 
+            if(generation%10==0):
+                partition.K_means(population_fitnesses,2,True)
+
             generation_counter += 1
             print("Gen: ", generation_counter)
             if self.partition_method == ("sharing") :  # adjust the fitnesses from the beggining based on fitness sharing method
@@ -187,6 +190,7 @@ class GeneticAlgorithm:
                 # print("original fitnesses :", fitnesses)
                 adjusted_fitnesses = partition.adjust_fitness_with_sharing_binpack(population_fitnesses, SIGMA)
                 fitnesses = adjusted_fitnesses.copy()
+
                 for indiv, adjusted_fitness in zip(self.population, adjusted_fitnesses):
                     indiv.fitness = adjusted_fitness
 
@@ -302,8 +306,8 @@ class GeneticAlgorithm:
 
                 new_population.extend([child1, child2])
             self.population = sorted(new_population, key=lambda x: x.fitness)[:self.pop_size]
-            print(diversity_index(self.population))
-            print("")
+            # print(diversity_index(self.population))
+            # print("")
 
             # IN THIS MUTATION CONTROL METHOD, WE DISABLE THE NORMAL MUTATION FOR CHILDREN, AND WE DO THE MUTATION INDIVIDUALLY INSIDE THIS BLOCk
             if self.mutation_control == "self_adaptive":
@@ -330,6 +334,7 @@ class GeneticAlgorithm:
 
             end_cpu = time.process_time()
             end_elapsed = time.time()
+
 
             cpu_times.append(end_cpu - start_cpu)
             elapsed_times.append(end_elapsed - start_elapsed)
@@ -638,13 +643,13 @@ def ensure_capacity(chromosome, problem):
                             break
     return chromosome
 
-# ftv,item_sizes = load_values_from_file('try1.txt')
-#
-# bin_capacity = ftv[0]
-# num_items = ftv[1]
-# opt = ftv[2]
+ftv,item_sizes = load_values_from_file('try1')
 
-# problem = BinPackingProblem(item_sizes, bin_capacity, num_items)
+bin_capacity = ftv[0]
+num_items = ftv[1]
+opt = ftv[2]
+
+problem = BinPackingProblem(item_sizes, bin_capacity, num_items)
 
 def print_total_size_used(chromosome, item_sizes):
     bins = [0] * (max(chromosome) + 1)
@@ -652,8 +657,9 @@ def print_total_size_used(chromosome, item_sizes):
         bins[bin_index] += item_sizes[i]
     for i, bin_size in enumerate(bins):
         if bin_size!=0:
-           print(f"Bin {i}: {bin_size}")
-    print(sum(item_sizes),sum(bins))
+            pass
+           # print(f"Bin {i}: {bin_size}")
+    # print(sum(item_sizes),sum(bins))
 
 
 
@@ -676,21 +682,23 @@ def diversity_index(population):
 
 
 
-# # Using best fit heuristic
-# ga = GeneticAlgorithm(
-#     pop_size=150,
-#     num_genes=num_items,
-#     fitness_func=fitness_func,
-#     max_generations=150,
-#     mutation_rate="0.5",
-#     crossover_method=Two,
-#     mutation_method=mutation_method,
-#     parent_selection_method=tournament,
-#     problem=problem,
-#     opt=opt,
-#     heuristic=GeneticAlgorithm.best_fit_heuristic  # Pass the heuristic here
-# )
-#
-# solution_best_fit = ga.evolve()
-# print(solution_best_fit.chromosome,solution_best_fit.fitness)
-# print_total_size_used(solution_best_fit.chromosome,item_sizes)
+# Using best fit heuristic
+ga = GeneticAlgorithm(
+    pop_size=150,
+    num_genes=num_items,
+    fitness_func=fitness_func,
+    max_generations=50,
+    mutation_rate=0.5,
+    crossover_method=Two,
+    mutation_method=mutation_method,
+    mutation_control='non_uniform',
+    parent_selection_method=tournament,
+    partition_method='crowding',
+    problem=problem,
+    opt=opt,
+    heuristic=GeneticAlgorithm.best_fit_heuristic  # Pass the heuristic here
+)
+
+solution_best_fit = ga.evolve()
+print(solution_best_fit.chromosome,solution_best_fit.fitness)
+print_total_size_used(solution_best_fit.chromosome,item_sizes)
